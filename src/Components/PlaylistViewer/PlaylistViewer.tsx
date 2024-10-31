@@ -1,4 +1,9 @@
-export function PlaylistViewer() {
+interface PlaylistViewerProps {
+    playlistUrl: string;
+    setPlaylistUrl: (url: string) => void;
+}
+
+export function PlaylistViewer({ playlistUrl, setPlaylistUrl }: PlaylistViewerProps) {
     return (
         <>
             <label htmlFor="playlist-url" className="sr-only">Playlist URL</label>
@@ -8,6 +13,8 @@ export function PlaylistViewer() {
                 type="text"
                 placeholder="Enter Playlist URL"
                 title="Playlist URL"
+                value={playlistUrl}
+                onChange={(e) => setPlaylistUrl(e.target.value)}
             />
             <div className="flex justify-center items-center w-full h-48 bg-emerald-900 rounded-lg mb-5"></div>
         </ >

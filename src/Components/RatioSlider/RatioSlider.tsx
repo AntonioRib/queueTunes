@@ -1,8 +1,9 @@
-import { useState } from 'react';
+interface RatioSliderProps {
+    songToPodcastRatio: number;
+    setSongToPodcastRatio: (value: number) => void;
+}
 
-export function RatioSlider() {
-    const [songToPodcastRatio, setSongToPodcastRatio] = useState(5);
-
+export function RatioSlider({ songToPodcastRatio, setSongToPodcastRatio }: RatioSliderProps) {
     return (
         <div className="w-full text-start mb-5">
             <label htmlFor="songToPodcastRatio" className="text-white font-medium text-sm">Ratio (<output id="songToPodcastRatioValue">{songToPodcastRatio}</output> songs per podcast)</label>
