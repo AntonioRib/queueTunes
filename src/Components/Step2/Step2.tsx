@@ -6,15 +6,26 @@ interface Step2Props {
     setPlaylistUrl: (url: string) => void;
     songToPodcastRatio: number;
     setSongToPodcastRatio: (ratio: number) => void;
+    playlistName?: string;
+    playlistNumberOfSongs?: number;
+    playlistFollowers?: number;
+    loadingFailed: boolean;
 }
 
-export function Step2({ playlistUrl, setPlaylistUrl, songToPodcastRatio, setSongToPodcastRatio, }: Step2Props) {
+export function Step2({ playlistUrl, setPlaylistUrl, songToPodcastRatio, setSongToPodcastRatio, playlistName, playlistNumberOfSongs, playlistFollowers, loadingFailed }: Step2Props) {
     return (
         <div id="step2" className="flex flex-col items-center font-semibold">
             <div className="my-5 text-base">
                 2. Add the playlist you'll want to queue and choose the podcast-to-song ratio
             </div>
-            <PlaylistViewer playlistUrl={playlistUrl} setPlaylistUrl={setPlaylistUrl} />
+            <PlaylistViewer
+                playlistUrl={playlistUrl}
+                setPlaylistUrl={setPlaylistUrl}
+                playlistName={playlistName}
+                playlistNumberOfSongs={playlistNumberOfSongs}
+                playlistFollowers={playlistFollowers}
+                loadingFailed={loadingFailed}
+            />
             <RatioSlider songToPodcastRatio={songToPodcastRatio} setSongToPodcastRatio={setSongToPodcastRatio} />
         </div>
     );

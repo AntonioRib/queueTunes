@@ -1,9 +1,31 @@
 interface PlaylistViewerProps {
     playlistUrl: string;
     setPlaylistUrl: (url: string) => void;
+    playlistName?: string;
+    playlistNumberOfSongs?: number;
+    playlistFollowers?: number;
+    loadingFailed: boolean;
 }
 
-export function PlaylistViewer({ playlistUrl, setPlaylistUrl }: PlaylistViewerProps) {
+export function PlaylistViewer({ playlistUrl, setPlaylistUrl, playlistName, playlistNumberOfSongs, playlistFollowers, loadingFailed }: PlaylistViewerProps) {
+    let playlistInfo = <></>;
+    if (loadingFailed) {
+        playlistInfo = (
+            <div className="flex flex-col justify-end items-start w-full bg-emerald-900 rounded-lg mb-5 text-white p-2">
+                <h1 className="text-xl font-bold mb-1">Error loading playlist</h1>
+                <p className="text-sm mb-0.5">Please check the playlist URL and try again</p>
+            </div>
+        );
+    } else {
+        playlistInfo = (
+            <div className="flex flex-col justify-end items-start w-full bg-emerald-900 rounded-lg mb-5 text-white p-2">
+                <h1 className="text-xl font-bold mb-1">{playlistName || "No playlist selected"}</h1>
+                {playlistNumberOfSongs && <p className="text-sm mb-0.5">Songs: {playlistNumberOfSongs}</p>}
+                {playlistFollowers && <p className="text-sm">Followers: {playlistFollowers}</p>}
+            </div>
+        );
+    }
+
     return (
         <>
             <label htmlFor="playlist-url" className="sr-only">Playlist URL</label>
@@ -16,7 +38,7 @@ export function PlaylistViewer({ playlistUrl, setPlaylistUrl }: PlaylistViewerPr
                 value={playlistUrl}
                 onChange={(e) => setPlaylistUrl(e.target.value)}
             />
-            <div className="flex justify-center items-center w-full h-48 bg-emerald-900 rounded-lg mb-5"></div>
+            {playlistInfo}
         </ >
     );
 }
