@@ -61,8 +61,10 @@ const getCachedToken = () => {
 
 // Endpoint to get the access token
 app.get("/api/token", async (req, res) => {
+  console.log("Getting a call to get the token");
   const savedToken = getCachedToken();
   if (savedToken) {
+    console.log("Saved token found");
     res.json({
       access_token: savedToken.access_token,
       expiration_time: savedToken.expiration_time,
@@ -82,6 +84,11 @@ app.get("/api/token", async (req, res) => {
     console.log("Failed to get token");
     res.status(500).json({ error: "Failed to get token" });
   }
+});
+
+app.get("/", (req, res) => {
+  console.log("Hello World");
+  res.send("Hello World!");
 });
 
 // Start the server
