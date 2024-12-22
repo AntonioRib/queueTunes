@@ -51,10 +51,10 @@
   },
   "react-dotenv": {
     "whitelist": [
-      "SPOTIFY_CLIENT_ID",
-      "BACKEND_TOKEN_URL",
-      "SPOTIFY_AUTH_URL",
-      "SPOTIFY_REDIRECT_URL"
+      "REACT_APP_SPOTIFY_CLIENT_ID",
+      "REACT_APP_BACKEND_TOKEN_URL",
+      "REACT_APP_SPOTIFY_AUTH_URL",
+      "REACT_APP_SPOTIFY_REDIRECT_URL"
     ]
   }
 }

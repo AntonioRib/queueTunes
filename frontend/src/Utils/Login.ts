@@ -4,9 +4,9 @@ import env from "react-dotenv";
 import { getFromLocalStorageWithExpiry, setLocalStorageWithExpiry } from './LocalStorage';
 import { base64encode, generateRandomString, sha256 } from './Crypto';
 
-const client_id = env.SPOTIFY_CLIENT_ID;
-const redirect_uri = env.SPOTIFY_REDIRECT_URL;
-const auth_uri = env.SPOTIFY_AUTH_URL;
+const client_id = env.REACT_APP_SPOTIFY_CLIENT_ID;
+const redirect_uri = env.REACT_APP_SPOTIFY_REDIRECT_URL;
+const auth_uri = env.REACT_APP_SPOTIFY_AUTH_URL;
 const authUrl = new URL(auth_uri);
 
 const SCOPES = [
