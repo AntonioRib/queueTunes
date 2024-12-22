@@ -45,6 +45,11 @@ jobs:
           output_location: "build" # Built app content directory - optional
           github_id_token: ${{ steps.idtoken.outputs.result }}
           ###### End of Repository/Build Configurations ######
+        env:
+          REACT_APP_BACKEND_TOKEN_URL: ${{ vars.REACT_APP_BACKEND_TOKEN_URL }}
+          REACT_APP_SPOTIFY_AUTH_URL: ${{ vars.REACT_APP_SPOTIFY_AUTH_URL }}
+          REACT_APP_SPOTIFY_CLIENT_ID: ${{ vars.REACT_APP_SPOTIFY_CLIENT_ID }}
+          REACT_APP_SPOTIFY_REDIRECT_URL: ${{ vars.REACT_APP_SPOTIFY_REDIRECT_URL }}
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
