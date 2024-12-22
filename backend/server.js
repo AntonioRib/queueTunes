@@ -65,30 +65,29 @@ app.get("/api/token", async (req, res) => {
   const savedToken = getCachedToken();
   if (savedToken) {
     console.log("Saved token found");
-    res.json({
+    return res.json({
       access_token: savedToken.access_token,
       expiration_time: savedToken.expiration_time,
     });
-    return;
   }
 
   console.log("No saved token found, getting new token");
   const token = await getSpotifyToken();
   if (token) {
     console.log("New Token:", token);
-    res.json({
+    return res.json({
       access_token: token.access_token,
       expiration_time: token.expiration_time,
     });
   } else {
     console.log("Failed to get token");
-    res.status(500).json({ error: "Failed to get token" });
+    return res.status(500).json({ error: "Failed to get token" });
   }
 });
 
 app.get("/", (req, res) => {
   console.log("Hello World");
-  res.send("Hello World!");
+  return res.send("Hello World!");
 });
 
 // Start the server
