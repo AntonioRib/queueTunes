@@ -2,8 +2,11 @@ import { PlaylistInfo } from "../Models/PlaylistInfo";
 import { GetPlaylistInfo } from "../Services/GetPlaylistInfo";
 import { GetPlaylistIdFromUrl } from "../Utils/GetPlaylistIdFromUrl";
 import { ValidatePlaylistUrl } from "../Utils/ValidatePlaylistUrl";
+import { savePlaylistInfo } from "./savePlaylistInfo";
 
-export const fetchPlaylistInfo = async (url: string, setPlaylistInfo: (value: React.SetStateAction<PlaylistInfo | undefined>) => void, setLoadingFailed: (value: React.SetStateAction<boolean>) => void) => {
+export const fetchPlaylistInfo = async (url: string,
+    setPlaylistInfo: (value: React.SetStateAction<PlaylistInfo | undefined>) => void,
+    setLoadingFailed: (value: React.SetStateAction<boolean>) => void) => {
     if (url === "") {
         setPlaylistInfo(undefined);
         return;
@@ -24,6 +27,7 @@ export const fetchPlaylistInfo = async (url: string, setPlaylistInfo: (value: Re
             return;
         }
         setPlaylistInfo(info);
+        savePlaylistInfo(url, info);
         setLoadingFailed(false);
     } catch (error) {
         console.error("Failed to fetch playlist info:", error);

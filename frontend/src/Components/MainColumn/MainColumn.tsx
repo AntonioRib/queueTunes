@@ -6,28 +6,90 @@ import { Step2 } from "../Step2/Step2";
 import { Step3 } from "../Step3/Step3";
 import { PlaylistInfo } from "../../Models/PlaylistInfo";
 import { fetchPlaylistInfo } from "../../Hooks/fetchPlaylistInfo";
+import { cleanTokens, getToken, logInWithSpotify } from "../../Utils/Login";
+import { GetSpotifyQueueState } from "../../Services/GetSpotifyQueueState";
+import { MergeQueueAndPlaylist } from "../../Utils/MergeQueueAndPlaylist";
+import { AddToSpotifyQueue } from "../../Services/AddToSpotifyQueue";
+import { SkipToNext } from "../../Services/SkipToNext";
+import { GetPlaybackState } from "../../Services/GetPlaybackState";
+import { restorePlaylistInfo } from "../../Hooks/restorePlaylistInfo";
+import { TrackToAdd } from "../../Models/TrackToAdd";
+import { addTracksToQueue } from "../../Utils/AddTracksToQueue";
+import { skipTracksOnQueue } from "../../Utils/SkipTracksOnQueue";
+import { saveSettings } from "../../Hooks/saveSettings";
+import { getSettings } from "../../Hooks/getSettings";
 
 export function MainColumn() {
     const [playlistUrl, setPlaylistUrl] = useState("");
-    const [songToPodcastRatio, setSongToPodcastRatio] = useState(5);
     const [playlistInfo, setPlaylistInfo] = useState<PlaylistInfo | undefined>(undefined);
     const [loadingFailed, setLoadingFailed] = useState(false);
+    const [currentUrl, _] = useState(window.location.href);
+
+    const savedSettings = getSettings(currentUrl);
+    const [songToPodcastRatio, setSongToPodcastRatio] = useState(savedSettings?.podcast_ratio || 2);
+    const [amountOfEpisodes, setAmountOfEpisodes] = useState(savedSettings?.number_episodes || 4);
 
     useEffect(() => {
         fetchPlaylistInfo(playlistUrl, setPlaylistInfo, setLoadingFailed);
     }, [playlistUrl, setPlaylistInfo, setLoadingFailed]);
 
-    const onClick = () => {
-        console.log("Queue Tunes with: " + playlistInfo?.name + " and songToPodcastRatio: " + songToPodcastRatio);
-        toast.success("Queue Tunes with: " + playlistInfo?.name + " and songToPodcastRatio: " + songToPodcastRatio);
-        toast.promise(new Promise(function (resolve, err) {
-            setTimeout(resolve, 5000);
-        }), {
-            loading: "Updating your playlist...",
-            success: "Playlist updated successfully",
-            error: "Failed to update playlist",
+    useEffect(() => {
+        restorePlaylistInfo(currentUrl, setPlaylistInfo, setPlaylistUrl, setLoadingFailed);
+    }, [currentUrl, setPlaylistInfo, setPlaylistUrl, setLoadingFailed, setAmountOfEpisodes, setSongToPodcastRatio]);
+
+    useEffect(() => {
+        if (!currentUrl.includes("/queue")) {
+            cleanTokens();
+            return;
+        }
+
+        toast.success("We have your info. Please click QueueTunes again!", {
+            id: 'click-again',
         });
-    }
+    });
+
+    const onClick = async () => {
+        saveSettings(amountOfEpisodes, songToPodcastRatio);
+        const [token, _] = await getToken();
+        if (!token) {
+            logInWithSpotify();
+            return;
+        }
+
+        const playbackState = await GetPlaybackState();
+        if (!playbackState.is_playing) {
+            toast.error("Please start playing a podcast.");
+            return;
+        }
+
+        const queueState = await GetSpotifyQueueState();
+        if (!queueState || !playlistInfo) {
+            toast.error("Failed to get queue state or playlist info. Please try again.");
+            return;
+        }
+
+        const idsToAdd = MergeQueueAndPlaylist(queueState, playlistInfo, amountOfEpisodes, songToPodcastRatio);
+        if (!idsToAdd || idsToAdd.length === 0) {
+            toast.error("No songs to add.");
+            return;
+        }
+
+        const addTracksPromise = addTracksToQueue(idsToAdd);
+        toast.promise(addTracksPromise, {
+            loading: "Adding songs to queue...",
+            success: "Successfully added songs to queue!",
+            error: "Failed to add songs to queue.",
+        });
+        await addTracksPromise;
+        const skipPromises = skipTracksOnQueue(amountOfEpisodes);
+        toast.promise(skipPromises, {
+            loading: "Skipping to next episode...",
+            success: "Successfully added songs to queue and skipped to next episode!",
+            error: "Failed to skip to next episode.",
+        });
+        await skipPromises;
+    };
+
 
     return (
         <div id="column" className="max-w-md min-w-60 text-start bg-emerald-950 border border-green-900 rounded-lg px-10 py-5 shadow-lg">
@@ -42,9 +104,11 @@ export function MainColumn() {
                 playlistNumberOfSongs={playlistInfo?.tracks?.total}
                 playlistFollowers={playlistInfo?.followers?.total}
                 loadingFailed={loadingFailed}
+                amountOfEpisodes={amountOfEpisodes}
+                setAmountOfEpisodes={setAmountOfEpisodes}
             />
             <Divider />
-            <Step3 onClick={onClick} disabled={loadingFailed || playlistInfo === undefined} />
+            <Step3 onClick={onClick} disabled={(loadingFailed || playlistInfo === undefined)} />
         </div>
     );
 }

@@ -1,5 +1,6 @@
 import { PlaylistViewer } from "../PlaylistViewer/PlaylistViewer";
 import { RatioSlider } from "../RatioSlider/RatioSlider";
+import { EpisodeSlider } from "../EpisodeSlider/EpisodeSlider";
 
 interface Step2Props {
     playlistUrl: string;
@@ -10,9 +11,11 @@ interface Step2Props {
     playlistNumberOfSongs?: number;
     playlistFollowers?: number;
     loadingFailed: boolean;
+    amountOfEpisodes: number;
+    setAmountOfEpisodes: (amount: number) => void;
 }
 
-export function Step2({ playlistUrl, setPlaylistUrl, songToPodcastRatio, setSongToPodcastRatio, playlistName, playlistNumberOfSongs, playlistFollowers, loadingFailed }: Step2Props) {
+export function Step2({ playlistUrl, setPlaylistUrl, songToPodcastRatio, setSongToPodcastRatio, playlistName, playlistNumberOfSongs, playlistFollowers, loadingFailed, amountOfEpisodes, setAmountOfEpisodes }: Step2Props) {
     return (
         <div id="step2" className="flex flex-col items-center font-semibold">
             <div className="my-5 text-base">
@@ -26,6 +29,7 @@ export function Step2({ playlistUrl, setPlaylistUrl, songToPodcastRatio, setSong
                 playlistFollowers={playlistFollowers}
                 loadingFailed={loadingFailed}
             />
+            <EpisodeSlider amountOfEpisodes={amountOfEpisodes} setAmountOfEpisodes={setAmountOfEpisodes} />
             <RatioSlider songToPodcastRatio={songToPodcastRatio} setSongToPodcastRatio={setSongToPodcastRatio} />
         </div>
     );

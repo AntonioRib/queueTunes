@@ -52,7 +52,9 @@
   "react-dotenv": {
     "whitelist": [
       "SPOTIFY_CLIENT_ID",
-      "BACKEND_TOKEN_URL"
+      "BACKEND_TOKEN_URL",
+      "SPOTIFY_AUTH_URL",
+      "SPOTIFY_REDIRECT_URL"
     ]
   }
 }
