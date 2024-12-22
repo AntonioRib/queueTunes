@@ -9,11 +9,8 @@ import { fetchPlaylistInfo } from "../../Hooks/fetchPlaylistInfo";
 import { cleanTokens, getToken, logInWithSpotify } from "../../Utils/Login";
 import { GetSpotifyQueueState } from "../../Services/GetSpotifyQueueState";
 import { MergeQueueAndPlaylist } from "../../Utils/MergeQueueAndPlaylist";
-import { AddToSpotifyQueue } from "../../Services/AddToSpotifyQueue";
-import { SkipToNext } from "../../Services/SkipToNext";
 import { GetPlaybackState } from "../../Services/GetPlaybackState";
 import { restorePlaylistInfo } from "../../Hooks/restorePlaylistInfo";
-import { TrackToAdd } from "../../Models/TrackToAdd";
 import { addTracksToQueue } from "../../Utils/AddTracksToQueue";
 import { skipTracksOnQueue } from "../../Utils/SkipTracksOnQueue";
 import { saveSettings } from "../../Hooks/saveSettings";
@@ -23,7 +20,7 @@ export function MainColumn() {
     const [playlistUrl, setPlaylistUrl] = useState("");
     const [playlistInfo, setPlaylistInfo] = useState<PlaylistInfo | undefined>(undefined);
     const [loadingFailed, setLoadingFailed] = useState(false);
-    const [currentUrl, _] = useState(window.location.href);
+    const [currentUrl] = useState(window.location.href);
 
     const savedSettings = getSettings(currentUrl);
     const [songToPodcastRatio, setSongToPodcastRatio] = useState(savedSettings?.podcast_ratio || 2);
@@ -50,7 +47,7 @@ export function MainColumn() {
 
     const onClick = async () => {
         saveSettings(amountOfEpisodes, songToPodcastRatio);
-        const [token, _] = await getToken();
+        const [token] = await getToken();
         if (!token) {
             logInWithSpotify();
             return;
