@@ -5,6 +5,9 @@
       "methods": [
         "get"
       ]
+    },
+    {
+      "route": "/queue"
     }
   ]
 }
