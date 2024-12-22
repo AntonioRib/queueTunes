@@ -1,12 +1,6 @@
 {
   "routes": [
     {
-      "route": "/queue",
-      "methods": [
-        "get"
-      ]
-    },
-    {
       "route": "/queue"
     }
   ]
