@@ -20,6 +20,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
+          cache-dependency-path: './backend/package-json.lock'
 
       - name: npm install, build, and test
         run: |
