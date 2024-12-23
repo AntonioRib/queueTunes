@@ -16,7 +16,6 @@ import { addTracksToQueue } from "../../Utils/AddTracksToQueue";
 import { skipTracksOnQueue } from "../../Utils/SkipTracksOnQueue";
 import { saveSettings } from "../../Hooks/saveSettings";
 import { getSettings } from "../../Hooks/getSettings";
-import { on } from "events";
 
 export function MainColumn() {
     const location = useLocation()
@@ -59,7 +58,7 @@ export function MainColumn() {
             });
             return;
         }
-    }, [location.pathname]);
+    }, [location.search, location.pathname]);
 
     useEffect(() => {
         if (hasFetched.current || location.pathname !== "/queue") {
