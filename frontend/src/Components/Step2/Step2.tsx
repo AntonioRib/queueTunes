@@ -17,9 +17,10 @@ interface Step2Props {
     setAmountOfEpisodes: (amount: number) => void;
     randomizedChecked: boolean;
     setRandomizedChecked: (checked: boolean) => void;
+    handleRetry: () => void;
 }
 
-export function Step2({ playlistUrl, setPlaylistUrl, songToPodcastRatio, setSongToPodcastRatio, playlistName, playlistNumberOfSongs, playlistFollowers, loadingFailed, isLoading, amountOfEpisodes, setAmountOfEpisodes, randomizedChecked, setRandomizedChecked }: Step2Props) {
+export function Step2({ playlistUrl, setPlaylistUrl, songToPodcastRatio, setSongToPodcastRatio, playlistName, playlistNumberOfSongs, playlistFollowers, loadingFailed, isLoading, amountOfEpisodes, setAmountOfEpisodes, randomizedChecked, setRandomizedChecked, handleRetry }: Step2Props) {
     return (
         <div id="step2" className="flex flex-col items-center font-semibold">
             <div className="my-5 text-base">
@@ -33,6 +34,7 @@ export function Step2({ playlistUrl, setPlaylistUrl, songToPodcastRatio, setSong
                 playlistFollowers={playlistFollowers}
                 loadingFailed={loadingFailed}
                 isLoading={isLoading}
+                handleRetry={handleRetry}
             />
             <RandomizeCheckbox randomizedChecked={randomizedChecked} setRandomizedChecked={setRandomizedChecked} />
             <EpisodeSlider amountOfEpisodes={amountOfEpisodes} setAmountOfEpisodes={setAmountOfEpisodes} />

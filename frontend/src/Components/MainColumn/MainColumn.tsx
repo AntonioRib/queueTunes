@@ -52,7 +52,6 @@ export function MainColumn() {
             return
         }
 
-        console.log(location.search);
         if (location.pathname === "/queue") {
             toast.success("We have your info. Please click QueueTunes again!", {
                 id: 'click-again',
@@ -134,6 +133,7 @@ export function MainColumn() {
                 setAmountOfEpisodes={setAmountOfEpisodes}
                 randomizedChecked={randomizedChecked}
                 setRandomizedChecked={setRandomizedChecked}
+                handleRetry={() => fetchPlaylistInfo(playlistUrl, setPlaylistInfo, setLoadingFailed, setIsLoading)}
             />
             <Divider />
             <Step3 onClick={onClick} disabled={(loadingFailed || playlistInfo === undefined)} />

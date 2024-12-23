@@ -1,8 +1,10 @@
-# QueueTunes
+# [QueueTunes](https://happy-ground-0d8a70103.4.azurestaticapps.net/)
 
 Do you consistently have to add music in between podcast episodes on Spotify? QueueTunes is a tool to intertwine songs with your Spotify Podcasts.
 
 All you have to do is, add the podcasts to your Spotify queue, tell which playlist you want to use, set a few settings and QueueTunes!
+
+If you only want to use it, you can do it [here](https://happy-ground-0d8a70103.4.azurestaticapps.net/).
 
 ### Built with
 
