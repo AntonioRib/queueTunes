@@ -16,6 +16,8 @@ import { addTracksToQueue } from "../../Utils/AddTracksToQueue";
 import { skipTracksOnQueue } from "../../Utils/SkipTracksOnQueue";
 import { saveSettings } from "../../Hooks/saveSettings";
 import { getSettings } from "../../Hooks/getSettings";
+import { QueueState } from "../../Models/QueueState";
+import { GetMySongs } from "../../Services/GetMySongs";
 
 export function MainColumn() {
     const location = useLocation()
@@ -24,7 +26,9 @@ export function MainColumn() {
     const [isLoading, setIsLoading] = useState(false);
     const [loadingFailed, setLoadingFailed] = useState(false);
 
+
     const savedSettings = getSettings(location.pathname);
+    const [useMySongs, setUseMySongs] = useState(savedSettings?.useMySongs || "false");
     const [songToPodcastRatio, setSongToPodcastRatio] = useState(savedSettings?.podcast_ratio || 2);
     const [amountOfEpisodes, setAmountOfEpisodes] = useState(savedSettings?.number_episodes || 4);
 
@@ -73,7 +77,7 @@ export function MainColumn() {
     }, [location, hasFetched]);
 
     const onClick = async () => {
-        saveSettings(amountOfEpisodes, songToPodcastRatio, randomizedChecked);
+        saveSettings(amountOfEpisodes, songToPodcastRatio, randomizedChecked, useMySongs);
         const [token] = await getToken();
         if (!token) {
             logInWithSpotify();
@@ -92,6 +96,27 @@ export function MainColumn() {
             return;
         }
 
+        if (useMySongs === "true") {
+            const mySongs = await GetMySongs();
+            if (!mySongs) {
+                toast.error("Failed to get your songs. Please try again.");
+                return;
+            }
+            const play = {
+                tracks: {
+                    items: mySongs.items,
+                },
+                total: mySongs.items?.length,
+            } as PlaylistInfo;
+
+            await handleAddTracksAndSkip(queueState, play);
+            return;
+        }
+
+        await handleAddTracksAndSkip(queueState, playlistInfo);
+    };
+
+    const handleAddTracksAndSkip = async (queueState: QueueState, playlistInfo: PlaylistInfo) => {
         const idsToAdd = MergeQueueAndPlaylist(queueState, playlistInfo, amountOfEpisodes, songToPodcastRatio, randomizedChecked);
         if (!idsToAdd || idsToAdd.length === 0) {
             toast.error("No songs to add.");
@@ -114,7 +139,6 @@ export function MainColumn() {
         await skipPromises;
     };
 
-
     return (
         <div id="column" className="max-w-md min-w-60 text-start bg-emerald-950 border border-green-900 rounded-lg px-10 py-5 shadow-lg">
             <Step1 />
@@ -134,9 +158,11 @@ export function MainColumn() {
                 randomizedChecked={randomizedChecked}
                 setRandomizedChecked={setRandomizedChecked}
                 handleRetry={() => fetchPlaylistInfo(playlistUrl, setPlaylistInfo, setLoadingFailed, setIsLoading)}
+                useMySongs={useMySongs}
+                setUseMySongs={setUseMySongs}
             />
             <Divider />
-            <Step3 onClick={onClick} disabled={(loadingFailed || playlistInfo === undefined)} />
+            <Step3 onClick={onClick} disabled={(loadingFailed || playlistInfo === undefined && useMySongs === "false")} />
         </div>
     );
 }

@@ -2,6 +2,8 @@ import { PlaylistViewer } from "../PlaylistViewer/PlaylistViewer";
 import { RatioSlider } from "../RatioSlider/RatioSlider";
 import { EpisodeSlider } from "../EpisodeSlider/EpisodeSlider";
 import { RandomizeCheckbox } from "../RandomizeCheckbox/RandomizeCheckbox";
+import { SetStateAction, useState } from "react";
+import { SourceChoice } from "../SourceChoice/SourceChoice";
 
 interface Step2Props {
     playlistUrl: string;
@@ -18,24 +20,30 @@ interface Step2Props {
     randomizedChecked: boolean;
     setRandomizedChecked: (checked: boolean) => void;
     handleRetry: () => void;
+    useMySongs: string;
+    setUseMySongs: React.Dispatch<SetStateAction<string>>;
 }
 
-export function Step2({ playlistUrl, setPlaylistUrl, songToPodcastRatio, setSongToPodcastRatio, playlistName, playlistNumberOfSongs, playlistFollowers, loadingFailed, isLoading, amountOfEpisodes, setAmountOfEpisodes, randomizedChecked, setRandomizedChecked, handleRetry }: Step2Props) {
+export function Step2({ playlistUrl, setPlaylistUrl, songToPodcastRatio, setSongToPodcastRatio, playlistName, playlistNumberOfSongs, playlistFollowers, loadingFailed, isLoading, amountOfEpisodes, setAmountOfEpisodes, randomizedChecked, setRandomizedChecked, handleRetry, useMySongs, setUseMySongs }: Step2Props) {
     return (
         <div id="step2" className="flex flex-col items-center font-semibold">
-            <div className="my-5 text-base">
+            <div className="mt-5 text-base">
                 2. Add the playlist you'll want to queue and choose the podcast-to-song ratio
             </div>
-            <PlaylistViewer
-                playlistUrl={playlistUrl}
-                setPlaylistUrl={setPlaylistUrl}
-                playlistName={playlistName}
-                playlistNumberOfSongs={playlistNumberOfSongs}
-                playlistFollowers={playlistFollowers}
-                loadingFailed={loadingFailed}
-                isLoading={isLoading}
-                handleRetry={handleRetry}
-            />
+            <div className="w-full my-5">
+                <SourceChoice
+                    playlistUrl={playlistUrl}
+                    setPlaylistUrl={setPlaylistUrl}
+                    playlistName={playlistName}
+                    playlistNumberOfSongs={playlistNumberOfSongs}
+                    playlistFollowers={playlistFollowers}
+                    loadingFailed={loadingFailed}
+                    isLoading={isLoading}
+                    handleRetry={handleRetry}
+                    useMySongs={useMySongs}
+                    setUseMySongs={setUseMySongs}
+                />
+            </div>
             <RandomizeCheckbox randomizedChecked={randomizedChecked} setRandomizedChecked={setRandomizedChecked} />
             <EpisodeSlider amountOfEpisodes={amountOfEpisodes} setAmountOfEpisodes={setAmountOfEpisodes} />
             <RatioSlider songToPodcastRatio={songToPodcastRatio} setSongToPodcastRatio={setSongToPodcastRatio} />

@@ -13,6 +13,7 @@ const SCOPES = [
     'user-read-currently-playing',
     'user-read-playback-state',
     'user-modify-playback-state',
+    'user-library-read'
 ] as const;
 
 export const logInWithSpotify = async () => {
