@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Divider } from "../Divider/Divider";
 import { Step1 } from "../Step1/Step1";
@@ -15,18 +16,20 @@ import { addTracksToQueue } from "../../Utils/AddTracksToQueue";
 import { skipTracksOnQueue } from "../../Utils/SkipTracksOnQueue";
 import { saveSettings } from "../../Hooks/saveSettings";
 import { getSettings } from "../../Hooks/getSettings";
+import { on } from "events";
 
 export function MainColumn() {
+    const location = useLocation()
     const [playlistUrl, setPlaylistUrl] = useState("");
     const [playlistInfo, setPlaylistInfo] = useState<PlaylistInfo | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(false);
     const [loadingFailed, setLoadingFailed] = useState(false);
-    const [currentUrl] = useState(window.location.href);
 
-    const savedSettings = getSettings(currentUrl);
+    const savedSettings = getSettings(location.pathname);
     const [songToPodcastRatio, setSongToPodcastRatio] = useState(savedSettings?.podcast_ratio || 2);
     const [amountOfEpisodes, setAmountOfEpisodes] = useState(savedSettings?.number_episodes || 4);
 
+    const hasFetched = useRef(false);
     const [randomizedChecked, setRandomizedChecked] = useState(savedSettings?.randomize_tracks || false);
 
     useEffect(() => {
@@ -34,19 +37,41 @@ export function MainColumn() {
     }, [playlistUrl, setPlaylistInfo, setLoadingFailed, setIsLoading]);
 
     useEffect(() => {
-        restorePlaylistInfo(currentUrl, setPlaylistInfo, setPlaylistUrl, setLoadingFailed);
-    }, [currentUrl, setPlaylistInfo, setPlaylistUrl, setLoadingFailed, setAmountOfEpisodes, setSongToPodcastRatio]);
+        restorePlaylistInfo(location.pathname, setPlaylistInfo, setPlaylistUrl, setLoadingFailed);
+    }, [location.pathname, setPlaylistInfo, setPlaylistUrl, setLoadingFailed, setAmountOfEpisodes, setSongToPodcastRatio]);
 
     useEffect(() => {
-        if (!currentUrl.includes("/queue")) {
+        if (!location.pathname.includes("/queue")) {
             cleanTokens();
             return;
         }
 
-        toast.success("We have your info. Please click QueueTunes again!", {
-            id: 'click-again',
+        if (location.search.includes("?error")) {
+            toast.error("Failed to get your info. Please try again.", {
+                id: 'error-getting-info',
+            });
+            return
+        }
+
+        if (location.pathname === "/queue") {
+            toast.success("We have your info. Please click QueueTunes again!", {
+                id: 'click-again',
+            });
+            return;
+        }
+    }, [location.pathname]);
+
+    useEffect(() => {
+        if (hasFetched.current || location.pathname !== "/queue") {
+            return;
+        }
+
+        hasFetched.current = true;
+        getToken().then(() => {
+            console.log("Got token");
+            return;
         });
-    });
+    }, [location, hasFetched]);
 
     const onClick = async () => {
         saveSettings(amountOfEpisodes, songToPodcastRatio, randomizedChecked);
