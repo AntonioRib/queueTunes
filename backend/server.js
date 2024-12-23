@@ -7,7 +7,7 @@ const { LocalStorage } = require("node-localstorage");
 require("dotenv").config();
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5333;
 
 // Spotify Client Credentials
 const clientId = process.env.SPOTIFY_CLIENT_ID;

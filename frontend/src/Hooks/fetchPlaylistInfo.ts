@@ -6,7 +6,8 @@ import { savePlaylistInfo } from "./savePlaylistInfo";
 
 export const fetchPlaylistInfo = async (url: string,
     setPlaylistInfo: (value: React.SetStateAction<PlaylistInfo | undefined>) => void,
-    setLoadingFailed: (value: React.SetStateAction<boolean>) => void) => {
+    setLoadingFailed: (value: React.SetStateAction<boolean>) => void,
+    setIsLoading: (value: React.SetStateAction<boolean>) => void) => {
     if (url === "") {
         setPlaylistInfo(undefined);
         return;
@@ -21,7 +22,9 @@ export const fetchPlaylistInfo = async (url: string,
 
     const playlistId = GetPlaylistIdFromUrl(url);
     try {
+        setIsLoading(true);
         const info = await GetPlaylistInfo(playlistId);
+        setIsLoading(false);
         if (!info) {
             setLoadingFailed(true);
             return;
@@ -31,6 +34,7 @@ export const fetchPlaylistInfo = async (url: string,
         setLoadingFailed(false);
     } catch (error) {
         console.error("Failed to fetch playlist info:", error);
+        setIsLoading(false);
         setLoadingFailed(true);
     }
 };

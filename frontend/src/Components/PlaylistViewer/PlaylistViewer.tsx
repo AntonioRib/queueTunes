@@ -5,11 +5,19 @@ interface PlaylistViewerProps {
     playlistNumberOfSongs?: number;
     playlistFollowers?: number;
     loadingFailed: boolean;
+    isLoading: boolean;
 }
 
-export function PlaylistViewer({ playlistUrl, setPlaylistUrl, playlistName, playlistNumberOfSongs, playlistFollowers, loadingFailed }: PlaylistViewerProps) {
+export function PlaylistViewer({ playlistUrl, setPlaylistUrl, playlistName, playlistNumberOfSongs, playlistFollowers, loadingFailed, isLoading }: PlaylistViewerProps) {
     let playlistInfo = <></>;
-    if (loadingFailed) {
+    if (isLoading) {
+        playlistInfo = (
+            <div className="flex flex-col justify-center items-center w-full bg-emerald-900 rounded-lg mb-5 text-white p-4">
+                <h1 className="text-xl font-bold mb-2">Loading playlist...</h1>
+                <div className="w-5 h-5 border-4 border-white border-t-emerald-700 rounded-full animate-spin"></div>
+            </div>
+        );
+    } else if (loadingFailed) {
         playlistInfo = (
             <div className="flex flex-col justify-end items-start w-full bg-emerald-900 rounded-lg mb-5 text-white p-2">
                 <h1 className="text-xl font-bold mb-1">Error loading playlist</h1>

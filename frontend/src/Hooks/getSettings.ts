@@ -1,6 +1,7 @@
 export const getSettings = (currentUrl: string): {
     number_episodes: number,
-    podcast_ratio: number
+    podcast_ratio: number,
+    randomize_tracks: boolean
 } | null => {
     if (!currentUrl.includes("/queue")) {
         return null;
@@ -14,5 +15,6 @@ export const getSettings = (currentUrl: string): {
     return settings as {
         number_episodes: number,
         podcast_ratio: number
+        randomize_tracks: boolean
     };
 };

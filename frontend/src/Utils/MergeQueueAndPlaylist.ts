@@ -2,7 +2,7 @@ import { PlaylistInfo } from "../Models/PlaylistInfo";
 import { QueueState } from "../Models/QueueState";
 import { TrackToAdd } from "../Models/TrackToAdd";
 
-export const MergeQueueAndPlaylist = (queue: QueueState, playlist: PlaylistInfo, amountOfEpisodes: number, songsPerEpisode: number) => {
+export const MergeQueueAndPlaylist = (queue: QueueState, playlist: PlaylistInfo, amountOfEpisodes: number, songsPerEpisode: number, randomizeTracks: boolean) => {
     if (!queue || !playlist || !playlist.tracks || !playlist.tracks.items || !queue.queue) {
         return undefined;
     }
@@ -11,6 +11,11 @@ export const MergeQueueAndPlaylist = (queue: QueueState, playlist: PlaylistInfo,
     const playlistTracks = playlist.tracks.items;
     const queueCurrentlyPlaying = queue.currently_playing;
     const queueTracks = [queueCurrentlyPlaying, ...queue.queue];
+
+    if (randomizeTracks) {
+        playlistTracks.sort(() => Math.random() - 0.5);
+    }
+
     for (let epidosesCount = 0; epidosesCount < amountOfEpisodes; epidosesCount++) {
         const queueTrack = queueTracks[epidosesCount];
         if (queueTrack && queueTrack.name && queueTrack.uri) {

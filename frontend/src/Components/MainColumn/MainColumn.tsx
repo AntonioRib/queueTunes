@@ -19,6 +19,7 @@ import { getSettings } from "../../Hooks/getSettings";
 export function MainColumn() {
     const [playlistUrl, setPlaylistUrl] = useState("");
     const [playlistInfo, setPlaylistInfo] = useState<PlaylistInfo | undefined>(undefined);
+    const [isLoading, setIsLoading] = useState(false);
     const [loadingFailed, setLoadingFailed] = useState(false);
     const [currentUrl] = useState(window.location.href);
 
@@ -26,9 +27,11 @@ export function MainColumn() {
     const [songToPodcastRatio, setSongToPodcastRatio] = useState(savedSettings?.podcast_ratio || 2);
     const [amountOfEpisodes, setAmountOfEpisodes] = useState(savedSettings?.number_episodes || 4);
 
+    const [randomizedChecked, setRandomizedChecked] = useState(savedSettings?.randomize_tracks || false);
+
     useEffect(() => {
-        fetchPlaylistInfo(playlistUrl, setPlaylistInfo, setLoadingFailed);
-    }, [playlistUrl, setPlaylistInfo, setLoadingFailed]);
+        fetchPlaylistInfo(playlistUrl, setPlaylistInfo, setLoadingFailed, setIsLoading);
+    }, [playlistUrl, setPlaylistInfo, setLoadingFailed, setIsLoading]);
 
     useEffect(() => {
         restorePlaylistInfo(currentUrl, setPlaylistInfo, setPlaylistUrl, setLoadingFailed);
@@ -46,7 +49,7 @@ export function MainColumn() {
     });
 
     const onClick = async () => {
-        saveSettings(amountOfEpisodes, songToPodcastRatio);
+        saveSettings(amountOfEpisodes, songToPodcastRatio, randomizedChecked);
         const [token] = await getToken();
         if (!token) {
             logInWithSpotify();
@@ -65,7 +68,7 @@ export function MainColumn() {
             return;
         }
 
-        const idsToAdd = MergeQueueAndPlaylist(queueState, playlistInfo, amountOfEpisodes, songToPodcastRatio);
+        const idsToAdd = MergeQueueAndPlaylist(queueState, playlistInfo, amountOfEpisodes, songToPodcastRatio, randomizedChecked);
         if (!idsToAdd || idsToAdd.length === 0) {
             toast.error("No songs to add.");
             return;
@@ -101,8 +104,11 @@ export function MainColumn() {
                 playlistNumberOfSongs={playlistInfo?.tracks?.total}
                 playlistFollowers={playlistInfo?.followers?.total}
                 loadingFailed={loadingFailed}
+                isLoading={isLoading}
                 amountOfEpisodes={amountOfEpisodes}
                 setAmountOfEpisodes={setAmountOfEpisodes}
+                randomizedChecked={randomizedChecked}
+                setRandomizedChecked={setRandomizedChecked}
             />
             <Divider />
             <Step3 onClick={onClick} disabled={(loadingFailed || playlistInfo === undefined)} />
