@@ -52,6 +52,7 @@ export function MainColumn() {
             return
         }
 
+        console.log(location.search);
         if (location.pathname === "/queue") {
             toast.success("We have your info. Please click QueueTunes again!", {
                 id: 'click-again',
