@@ -1,9 +1,10 @@
 interface QueueTunesButtonProps {
     onClick?: () => void,
-    disabled?: boolean
+    disabled?: boolean,
+    isQueuingTunes?: boolean,
 }
 
-export function QueueTunesButton({ onClick, disabled }: QueueTunesButtonProps) {
+export function QueueTunesButton({ onClick, disabled, isQueuingTunes }: QueueTunesButtonProps) {
     return (
         <button
             type="button"
@@ -12,7 +13,7 @@ export function QueueTunesButton({ onClick, disabled }: QueueTunesButtonProps) {
             onClick={onClick}
             disabled={disabled}
         >
-            {disabled ? "Please select a playlist" : "Queue Tunes"}
+            {disabled && !isQueuingTunes ? "Please select a playlist" : "Queue Tunes"}
         </button>
 
     );

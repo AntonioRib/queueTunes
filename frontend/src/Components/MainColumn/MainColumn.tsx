@@ -33,6 +33,9 @@ export function MainColumn() {
     const [amountOfEpisodes, setAmountOfEpisodes] = useState(savedSettings?.number_episodes || 4);
 
     const hasFetched = useRef(false);
+    const requestOnGoing = useRef(false);
+    const [isQueuingTunes, setIsQueuingTunes] = useState(false);
+
     const [randomizedChecked, setRandomizedChecked] = useState(savedSettings?.randomize_tracks || false);
 
     useEffect(() => {
@@ -117,6 +120,13 @@ export function MainColumn() {
     };
 
     const handleAddTracksAndSkip = async (queueState: QueueState, playlistInfo: PlaylistInfo) => {
+        if (requestOnGoing.current || isQueuingTunes) {
+            console.log("Request is ongoing. Please wait.");
+            return;
+        }
+
+        requestOnGoing.current = true;
+        setIsQueuingTunes(true);
         const idsToAdd = MergeQueueAndPlaylist(queueState, playlistInfo, amountOfEpisodes, songToPodcastRatio, randomizedChecked);
         if (!idsToAdd || idsToAdd.length === 0) {
             toast.error("No songs to add.");
@@ -137,6 +147,8 @@ export function MainColumn() {
             error: "Failed to skip to next episode.",
         });
         await skipPromises;
+        setIsQueuingTunes(false);
+        requestOnGoing.current = false;
     };
 
     return (
@@ -162,7 +174,11 @@ export function MainColumn() {
                 setUseMySongs={setUseMySongs}
             />
             <Divider />
-            <Step3 onClick={onClick} disabled={(loadingFailed || playlistInfo === undefined) && useMySongs === "false"} />
+            <Step3
+                onClick={onClick}
+                disabled={(((loadingFailed || playlistInfo === undefined) && useMySongs === "false") || isQueuingTunes)}
+                isQueuingTunes={isQueuingTunes}
+            />
         </div>
     );
 }
