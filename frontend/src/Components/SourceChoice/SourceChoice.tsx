@@ -1,4 +1,4 @@
-import { SetStateAction, useState } from "react";
+import { SetStateAction } from "react";
 import { PlaylistViewer } from "../PlaylistViewer/PlaylistViewer";
 
 interface SourceChoiceProps {

@@ -162,7 +162,7 @@ export function MainColumn() {
                 setUseMySongs={setUseMySongs}
             />
             <Divider />
-            <Step3 onClick={onClick} disabled={(loadingFailed || playlistInfo === undefined && useMySongs === "false")} />
+            <Step3 onClick={onClick} disabled={(loadingFailed || playlistInfo === undefined) && useMySongs === "false"} />
         </div>
     );
 }

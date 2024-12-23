@@ -1,8 +1,7 @@
-import { PlaylistViewer } from "../PlaylistViewer/PlaylistViewer";
 import { RatioSlider } from "../RatioSlider/RatioSlider";
 import { EpisodeSlider } from "../EpisodeSlider/EpisodeSlider";
 import { RandomizeCheckbox } from "../RandomizeCheckbox/RandomizeCheckbox";
-import { SetStateAction, useState } from "react";
+import { SetStateAction } from "react";
 import { SourceChoice } from "../SourceChoice/SourceChoice";
 
 interface Step2Props {
