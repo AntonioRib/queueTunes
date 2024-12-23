@@ -4,6 +4,8 @@
 name: QueueTunes - Backend - Azure Web App
 on:
   push:
+    paths:
+      - backend/**
     branches:
       - main
   workflow_dispatch:
