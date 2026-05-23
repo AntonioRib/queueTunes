@@ -4,10 +4,6 @@ export const getSettings = (currentUrl: string): {
     randomize_tracks: boolean,
     useMySongs: string
 } | null => {
-    if (!currentUrl.includes("/queue")) {
-        return null;
-    }
-
     if (!localStorage.getItem("settings")) {
         return null;
     }

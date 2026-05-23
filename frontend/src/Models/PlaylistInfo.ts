@@ -6,6 +6,7 @@ export interface PlaylistInfo {
     type?: string;
     tracks?: {
         total?: number;
+        totalIsApproximate?: boolean;
         items?: [TrackInfo];
     };
     followers?: {

@@ -11,6 +11,7 @@ interface Step2Props {
     setSongToPodcastRatio: (ratio: number) => void;
     playlistName?: string;
     playlistNumberOfSongs?: number;
+    playlistSongsApproximate?: boolean;
     playlistFollowers?: number;
     loadingFailed: boolean;
     isLoading: boolean;
@@ -23,7 +24,7 @@ interface Step2Props {
     setUseMySongs: React.Dispatch<SetStateAction<string>>;
 }
 
-export function Step2({ playlistUrl, setPlaylistUrl, songToPodcastRatio, setSongToPodcastRatio, playlistName, playlistNumberOfSongs, playlistFollowers, loadingFailed, isLoading, amountOfEpisodes, setAmountOfEpisodes, randomizedChecked, setRandomizedChecked, handleRetry, useMySongs, setUseMySongs }: Step2Props) {
+export function Step2({ playlistUrl, setPlaylistUrl, songToPodcastRatio, setSongToPodcastRatio, playlistName, playlistNumberOfSongs, playlistSongsApproximate, playlistFollowers, loadingFailed, isLoading, amountOfEpisodes, setAmountOfEpisodes, randomizedChecked, setRandomizedChecked, handleRetry, useMySongs, setUseMySongs }: Step2Props) {
     return (
         <div id="step2" className="flex flex-col items-center font-semibold">
             <div className="mt-5 text-base">
@@ -35,6 +36,7 @@ export function Step2({ playlistUrl, setPlaylistUrl, songToPodcastRatio, setSong
                     setPlaylistUrl={setPlaylistUrl}
                     playlistName={playlistName}
                     playlistNumberOfSongs={playlistNumberOfSongs}
+                    playlistSongsApproximate={playlistSongsApproximate}
                     playlistFollowers={playlistFollowers}
                     loadingFailed={loadingFailed}
                     isLoading={isLoading}

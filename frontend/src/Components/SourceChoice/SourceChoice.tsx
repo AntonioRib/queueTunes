@@ -6,6 +6,7 @@ interface SourceChoiceProps {
     setPlaylistUrl: (url: string) => void;
     playlistName?: string;
     playlistNumberOfSongs?: number;
+    playlistSongsApproximate?: boolean;
     playlistFollowers?: number;
     loadingFailed: boolean;
     isLoading: boolean;
@@ -14,7 +15,7 @@ interface SourceChoiceProps {
     setUseMySongs: React.Dispatch<SetStateAction<string>>;
 }
 
-export const SourceChoice = ({ playlistUrl, setPlaylistUrl, playlistName, playlistNumberOfSongs, playlistFollowers, loadingFailed, isLoading, handleRetry, useMySongs, setUseMySongs }: SourceChoiceProps) => {
+export const SourceChoice = ({ playlistUrl, setPlaylistUrl, playlistName, playlistNumberOfSongs, playlistSongsApproximate, playlistFollowers, loadingFailed, isLoading, handleRetry, useMySongs, setUseMySongs }: SourceChoiceProps) => {
     const handleRadioChange = (event: { target: { value: SetStateAction<string>; }; }) => {
         setUseMySongs(event.target.value);
     };
@@ -62,6 +63,7 @@ export const SourceChoice = ({ playlistUrl, setPlaylistUrl, playlistName, playli
                 setPlaylistUrl={setPlaylistUrl}
                 playlistName={playlistName}
                 playlistNumberOfSongs={playlistNumberOfSongs}
+                playlistSongsApproximate={playlistSongsApproximate}
                 playlistFollowers={playlistFollowers}
                 loadingFailed={loadingFailed}
                 isLoading={isLoading}

@@ -6,6 +6,5 @@ export const getPlaylistInfo = () => {
         return null;
     }
 
-    localStorage.removeItem("playlistInfo");
     return JSON.parse(playlistInfo) as { url: string, info: PlaylistInfo };
 };

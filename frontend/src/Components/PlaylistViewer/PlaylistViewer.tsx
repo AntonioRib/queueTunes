@@ -3,13 +3,14 @@ interface PlaylistViewerProps {
     setPlaylistUrl: (url: string) => void;
     playlistName?: string;
     playlistNumberOfSongs?: number;
+    playlistSongsApproximate?: boolean;
     playlistFollowers?: number;
     loadingFailed: boolean;
     isLoading: boolean;
     handleRetry: () => void;
 }
 
-export function PlaylistViewer({ playlistUrl, setPlaylistUrl, playlistName, playlistNumberOfSongs, playlistFollowers, loadingFailed, isLoading, handleRetry }: PlaylistViewerProps) {
+export function PlaylistViewer({ playlistUrl, setPlaylistUrl, playlistName, playlistNumberOfSongs, playlistSongsApproximate, playlistFollowers, loadingFailed, isLoading, handleRetry }: PlaylistViewerProps) {
     let playlistInfo = <></>;
     if (isLoading) {
         playlistInfo = (
@@ -24,7 +25,9 @@ export function PlaylistViewer({ playlistUrl, setPlaylistUrl, playlistName, play
                 <div className="flex items-center w-full">
                     <div className="flex-1">
                         <h1 className="text-xl font-bold mb-1">Error loading playlist</h1>
-                        <p className="text-sm mb-0.5">Please check the playlist URL and try again</p>
+                        <p className="text-sm mb-0.5">
+                            Please check the playlist URL and try again
+                        </p>
                     </div>
                     <button
                         className="ml-4 bg-white text-emerald-900 p-2 rounded-full hover:bg-emerald-700 hover:text-white transition flex items-center justify-center"
@@ -42,10 +45,12 @@ export function PlaylistViewer({ playlistUrl, setPlaylistUrl, playlistName, play
         );
     } else {
         playlistInfo = (
-            <div className="flex flex-col justify-end items-start w-full bg-emerald-900 rounded-lg mb-2 text-white p-2">
+            <div className="flex flex-col justify-end items-start w-full bg-emerald-900 rounded-lg mb-2 text-white p-3">
                 <h1 className="text-xl font-bold mb-1">{playlistName || "No playlist selected"}</h1>
-                {playlistNumberOfSongs && <p className="text-sm mb-0.5">Songs: {playlistNumberOfSongs}</p>}
-                {playlistFollowers && <p className="text-sm">Followers: {playlistFollowers}</p>}
+                <div className="flex gap-4 text-sm text-emerald-200">
+                    {playlistNumberOfSongs !== undefined && <span>{playlistNumberOfSongs}{playlistSongsApproximate ? '+' : ''} songs</span>}
+                    {!!playlistFollowers && <span>{playlistFollowers.toLocaleString()} followers</span>}
+                </div>
             </div>
         );
     }

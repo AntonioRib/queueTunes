@@ -11,6 +11,8 @@ import { cleanTokens, getToken, logInWithSpotify } from "../../Utils/Login";
 import { GetSpotifyQueueState } from "../../Services/GetSpotifyQueueState";
 import { MergeQueueAndPlaylist } from "../../Utils/MergeQueueAndPlaylist";
 import { GetPlaybackState } from "../../Services/GetPlaybackState";
+import { GetPlaylistInfo } from "../../Services/GetPlaylistInfo";
+import { GetPlaylistIdFromUrl } from "../../Utils/GetPlaylistIdFromUrl";
 import { restorePlaylistInfo } from "../../Hooks/restorePlaylistInfo";
 import { addTracksToQueue } from "../../Utils/AddTracksToQueue";
 import { skipTracksOnQueue } from "../../Utils/SkipTracksOnQueue";
@@ -18,6 +20,7 @@ import { saveSettings } from "../../Hooks/saveSettings";
 import { getSettings } from "../../Hooks/getSettings";
 import { QueueState } from "../../Models/QueueState";
 import { GetMySongs } from "../../Services/GetMySongs";
+import { savePlaylistInfo } from "../../Hooks/savePlaylistInfo";
 
 export function MainColumn() {
     const location = useLocation()
@@ -47,35 +50,25 @@ export function MainColumn() {
     }, [location.pathname, setPlaylistInfo, setPlaylistUrl, setLoadingFailed, setAmountOfEpisodes, setSongToPodcastRatio]);
 
     useEffect(() => {
-        if (!location.pathname.includes("/queue")) {
-            cleanTokens();
-            return;
-        }
-
         if (location.search.includes("?error")) {
             toast.error("Failed to get your info. Please try again.", {
                 id: 'error-getting-info',
             });
             return
         }
-
-        if (location.pathname === "/queue") {
-            toast.success("We have your info. Please click QueueTunes again!", {
-                id: 'click-again',
-            });
-            return;
-        }
     }, [location.search, location.pathname]);
 
     useEffect(() => {
-        if (hasFetched.current || location.pathname !== "/queue") {
+        if (hasFetched.current || !location.search.includes("code=")) {
             return;
         }
 
         hasFetched.current = true;
-        getToken().then(() => {
-            console.log("Got token");
-            return;
+        getToken().then(([token]) => {
+            if (token && localStorage.getItem("pendingQueue")) {
+                localStorage.removeItem("pendingQueue");
+                onClick();
+            }
         });
     }, [location, hasFetched]);
 
@@ -83,6 +76,10 @@ export function MainColumn() {
         saveSettings(amountOfEpisodes, songToPodcastRatio, randomizedChecked, useMySongs);
         const [token] = await getToken();
         if (!token) {
+            if (playlistInfo) {
+                savePlaylistInfo(playlistUrl, playlistInfo);
+            }
+            localStorage.setItem("pendingQueue", "true");
             logInWithSpotify();
             return;
         }
@@ -94,8 +91,8 @@ export function MainColumn() {
         }
 
         const queueState = await GetSpotifyQueueState();
-        if (!queueState || !playlistInfo) {
-            toast.error("Failed to get queue state or playlist info. Please try again.");
+        if (!queueState) {
+            toast.error("Failed to get queue state. Please try again.");
             return;
         }
 
@@ -116,7 +113,22 @@ export function MainColumn() {
             return;
         }
 
-        await handleAddTracksAndSkip(queueState, playlistInfo);
+        // Fetch playlist info on-demand if not already loaded
+        let currentPlaylistInfo = playlistInfo;
+        if (!currentPlaylistInfo && playlistUrl) {
+            const playlistId = GetPlaylistIdFromUrl(playlistUrl);
+            currentPlaylistInfo = await GetPlaylistInfo(playlistId);
+            if (currentPlaylistInfo) {
+                setPlaylistInfo(currentPlaylistInfo);
+            }
+        }
+
+        if (!currentPlaylistInfo) {
+            toast.error("Failed to get playlist info. Please check your playlist URL.");
+            return;
+        }
+
+        await handleAddTracksAndSkip(queueState, currentPlaylistInfo);
     };
 
     const handleAddTracksAndSkip = async (queueState: QueueState, playlistInfo: PlaylistInfo) => {
@@ -130,6 +142,8 @@ export function MainColumn() {
         const idsToAdd = MergeQueueAndPlaylist(queueState, playlistInfo, amountOfEpisodes, songToPodcastRatio, randomizedChecked);
         if (!idsToAdd || idsToAdd.length === 0) {
             toast.error("No songs to add.");
+            setIsQueuingTunes(false);
+            requestOnGoing.current = false;
             return;
         }
 
@@ -162,6 +176,7 @@ export function MainColumn() {
                 setSongToPodcastRatio={setSongToPodcastRatio}
                 playlistName={playlistInfo?.name}
                 playlistNumberOfSongs={playlistInfo?.tracks?.total}
+                playlistSongsApproximate={playlistInfo?.tracks?.totalIsApproximate}
                 playlistFollowers={playlistInfo?.followers?.total}
                 loadingFailed={loadingFailed}
                 isLoading={isLoading}
@@ -176,7 +191,7 @@ export function MainColumn() {
             <Divider />
             <Step3
                 onClick={onClick}
-                disabled={(((loadingFailed || playlistInfo === undefined) && useMySongs === "false") || isQueuingTunes)}
+                disabled={((playlistInfo === undefined && useMySongs === "false") || isQueuingTunes)}
                 isQueuingTunes={isQueuingTunes}
             />
         </div>
