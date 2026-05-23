@@ -7,7 +7,7 @@ import { Step2 } from "../Step2/Step2";
 import { Step3 } from "../Step3/Step3";
 import { PlaylistInfo } from "../../Models/PlaylistInfo";
 import { fetchPlaylistInfo } from "../../Hooks/fetchPlaylistInfo";
-import { cleanTokens, getToken, logInWithSpotify } from "../../Utils/Login";
+import { getToken, logInWithSpotify } from "../../Utils/Login";
 import { GetSpotifyQueueState } from "../../Services/GetSpotifyQueueState";
 import { MergeQueueAndPlaylist, countEpisodesInQueue } from "../../Utils/MergeQueueAndPlaylist";
 import { GetPlaybackState } from "../../Services/GetPlaybackState";
@@ -110,6 +110,7 @@ export function MainColumn() {
                 onClick();
             }
         });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location, hasFetched]);
 
     const onClick = async () => {
