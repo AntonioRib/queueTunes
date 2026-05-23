@@ -91,7 +91,8 @@ const requestToken = async (code: string) => {
     });
 
     if (response.access_token) {
-        setLocalStorageWithExpiry('access_token', response.access_token, response.expires_in * 1000);
+        // Store with 5min buffer so we refresh before Spotify actually expires it
+        setLocalStorageWithExpiry('access_token', response.access_token, (response.expires_in - 300) * 1000);
         axios.defaults.headers.common['Authorization'] = 'Bearer ' + response.access_token;
         localStorage.setItem('refresh_token', response.refresh_token);
     }
@@ -119,7 +120,8 @@ const refreshAccessToken = async (refreshToken: string): Promise<string | null> 
         });
 
         if (response.access_token) {
-            setLocalStorageWithExpiry('access_token', response.access_token, response.expires_in * 1000);
+            // Store with 5min buffer so we refresh before Spotify actually expires it
+            setLocalStorageWithExpiry('access_token', response.access_token, (response.expires_in - 300) * 1000);
             axios.defaults.headers.common['Authorization'] = 'Bearer ' + response.access_token;
             if (response.refresh_token) {
                 localStorage.setItem('refresh_token', response.refresh_token);
@@ -140,3 +142,40 @@ export const cleanTokens = () => {
     localStorage.removeItem('code_verifier');
     delete axios.defaults.headers.common['Authorization'];
 };
+
+// Axios interceptor: auto-refresh token on 401 and retry the request
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
+
+axios.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config;
+        if (
+            error.response?.status === 401 &&
+            !originalRequest._retry &&
+            !originalRequest.url?.includes('accounts.spotify.com')
+        ) {
+            originalRequest._retry = true;
+
+            if (!isRefreshing) {
+                isRefreshing = true;
+                const refreshToken = localStorage.getItem('refresh_token');
+                refreshPromise = refreshToken ? refreshAccessToken(refreshToken) : Promise.resolve(null);
+                refreshPromise.finally(() => { isRefreshing = false; });
+            }
+
+            const newToken = await refreshPromise;
+            if (newToken) {
+                originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+                return axios(originalRequest);
+            }
+
+            // Refresh failed — tokens are invalid, force re-login
+            cleanTokens();
+            logInWithSpotify();
+            return new Promise(() => { }); // halt the chain, page is redirecting
+        }
+        return Promise.reject(error);
+    }
+);

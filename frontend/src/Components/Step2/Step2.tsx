@@ -22,9 +22,10 @@ interface Step2Props {
     handleRetry: () => void;
     useMySongs: boolean;
     setUseMySongs: React.Dispatch<SetStateAction<boolean>>;
+    reshuffle?: () => void;
 }
 
-export function Step2({ playlistUrl, setPlaylistUrl, songToPodcastRatio, setSongToPodcastRatio, playlistName, playlistNumberOfSongs, playlistSongsApproximate, playlistFollowers, loadingFailed, isLoading, amountOfEpisodes, setAmountOfEpisodes, randomizedChecked, setRandomizedChecked, handleRetry, useMySongs, setUseMySongs }: Step2Props) {
+export function Step2({ playlistUrl, setPlaylistUrl, songToPodcastRatio, setSongToPodcastRatio, playlistName, playlistNumberOfSongs, playlistSongsApproximate, playlistFollowers, loadingFailed, isLoading, amountOfEpisodes, setAmountOfEpisodes, randomizedChecked, setRandomizedChecked, handleRetry, useMySongs, setUseMySongs, reshuffle }: Step2Props) {
     return (
         <div id="step2" className="flex flex-col items-center font-semibold">
             <div className="mt-5 text-base">
@@ -45,7 +46,7 @@ export function Step2({ playlistUrl, setPlaylistUrl, songToPodcastRatio, setSong
                     setUseMySongs={setUseMySongs}
                 />
             </div>
-            <RandomizeCheckbox randomizedChecked={randomizedChecked} setRandomizedChecked={setRandomizedChecked} />
+            <RandomizeCheckbox randomizedChecked={randomizedChecked} setRandomizedChecked={setRandomizedChecked} reshuffle={reshuffle} />
             <EpisodeSlider amountOfEpisodes={amountOfEpisodes} setAmountOfEpisodes={setAmountOfEpisodes} />
             <RatioSlider songToPodcastRatio={songToPodcastRatio} setSongToPodcastRatio={setSongToPodcastRatio} />
         </div>

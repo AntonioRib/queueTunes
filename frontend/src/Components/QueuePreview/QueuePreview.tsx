@@ -1,23 +1,16 @@
-import { useState } from "react";
 import { PlaylistInfo } from "../../Models/PlaylistInfo";
 
 interface QueuePreviewProps {
-    playlistInfo?: PlaylistInfo;
+    tracks?: PlaylistInfo['tracks'];
     amountOfEpisodes: number;
     songToPodcastRatio: number;
-    randomizedChecked: boolean;
+    isOpen: boolean;
+    setIsOpen: (open: boolean) => void;
 }
 
-export function QueuePreview({ playlistInfo, amountOfEpisodes, songToPodcastRatio, randomizedChecked }: QueuePreviewProps) {
-    const [isOpen, setIsOpen] = useState(false);
-
-    if (!playlistInfo?.tracks?.items) {
+export function QueuePreview({ tracks, amountOfEpisodes, songToPodcastRatio, isOpen, setIsOpen }: QueuePreviewProps) {
+    if (!tracks?.items) {
         return null;
-    }
-
-    const tracks = [...playlistInfo.tracks.items];
-    if (randomizedChecked) {
-        tracks.sort(() => Math.random() - 0.5);
     }
 
     // Build a preview of the interleaved queue pattern
@@ -27,7 +20,7 @@ export function QueuePreview({ playlistInfo, amountOfEpisodes, songToPodcastRati
     for (let ep = 0; ep < amountOfEpisodes; ep++) {
         preview.push({ name: `Episode ${ep + 1}`, type: 'episode' });
         for (let s = 0; s < songToPodcastRatio; s++) {
-            const track = tracks[trackIndex]?.track;
+            const track = tracks.items[trackIndex]?.track;
             if (track?.name) {
                 const artist = track.artists?.[0]?.name;
                 preview.push({ name: artist ? `${track.name} — ${artist}` : track.name, type: 'song' });
@@ -64,9 +57,7 @@ export function QueuePreview({ playlistInfo, amountOfEpisodes, songToPodcastRati
                     ))}
                 </div>
             )}
-            {isOpen && randomizedChecked && (
-                <p className="text-xs text-emerald-400/70 mt-2 italic">Songs will be shuffled on queue</p>
-            )}
+
         </div>
     );
 }

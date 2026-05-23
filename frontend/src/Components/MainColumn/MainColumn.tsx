@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Divider } from "../Divider/Divider";
@@ -9,11 +9,12 @@ import { PlaylistInfo } from "../../Models/PlaylistInfo";
 import { fetchPlaylistInfo } from "../../Hooks/fetchPlaylistInfo";
 import { cleanTokens, getToken, logInWithSpotify } from "../../Utils/Login";
 import { GetSpotifyQueueState } from "../../Services/GetSpotifyQueueState";
-import { MergeQueueAndPlaylist } from "../../Utils/MergeQueueAndPlaylist";
+import { MergeQueueAndPlaylist, countEpisodesInQueue } from "../../Utils/MergeQueueAndPlaylist";
 import { GetPlaybackState } from "../../Services/GetPlaybackState";
 import { GetPlaylistInfo } from "../../Services/GetPlaylistInfo";
 import { GetPlaylistIdFromUrl } from "../../Utils/GetPlaylistIdFromUrl";
 import { restorePlaylistInfo } from "../../Hooks/restorePlaylistInfo";
+import { getPlaylistInfo } from "../../Hooks/getPlaylistInfo";
 import { addTracksToQueue } from "../../Utils/AddTracksToQueue";
 import { skipTracksOnQueue } from "../../Utils/SkipTracksOnQueue";
 import { saveSettings } from "../../Hooks/saveSettings";
@@ -41,6 +42,42 @@ export function MainColumn() {
     const [isQueuingTunes, setIsQueuingTunes] = useState(false);
 
     const [randomizedChecked, setRandomizedChecked] = useState(savedSettings?.randomize_tracks || false);
+    const [shuffledTracks, setShuffledTracks] = useState<PlaylistInfo['tracks']>(undefined);
+    const [previewOpen, setPreviewOpen] = useState(false);
+    const previewClosedByUser = useRef(false);
+
+    const handleSetPreviewOpen = (open: boolean) => {
+        if (!open) previewClosedByUser.current = true;
+        setPreviewOpen(open);
+    };
+
+    const shuffleTracks = useCallback((tracks: PlaylistInfo['tracks']) => {
+        if (!tracks?.items) return undefined;
+        const shuffled = [...tracks.items].sort(() => Math.random() - 0.5);
+        return { ...tracks, items: shuffled as [any] };
+    }, []);
+
+    // Recompute track order when playlist changes or randomize is toggled
+    useEffect(() => {
+        if (!playlistInfo?.tracks?.items) {
+            setShuffledTracks(undefined);
+            return;
+        }
+        if (randomizedChecked) {
+            setShuffledTracks(shuffleTracks(playlistInfo.tracks));
+        } else {
+            setShuffledTracks(playlistInfo.tracks);
+        }
+    }, [playlistInfo, randomizedChecked, shuffleTracks]);
+
+    const reshuffle = useCallback(() => {
+        if (playlistInfo?.tracks) {
+            setShuffledTracks(shuffleTracks(playlistInfo.tracks));
+            if (!previewClosedByUser.current) {
+                setPreviewOpen(true);
+            }
+        }
+    }, [playlistInfo, shuffleTracks]);
 
     useEffect(() => {
         fetchPlaylistInfo(playlistUrl, setPlaylistInfo, setLoadingFailed, setIsLoading);
@@ -86,7 +123,7 @@ export function MainColumn() {
         }
 
         const playbackState = await GetPlaybackState();
-        if (!playbackState.is_playing) {
+        if (!playbackState || !playbackState.is_playing) {
             toast.error("Please start playing a podcast.");
             return;
         }
@@ -97,27 +134,41 @@ export function MainColumn() {
             return;
         }
 
+        const detectedEpisodes = countEpisodesInQueue(queueState);
+        if (detectedEpisodes === 0) {
+            toast.error("No podcast episodes found in your queue. Please start playing a podcast.");
+            return;
+        }
+
         if (useMySongs) {
             const mySongs = await GetMySongs();
             if (!mySongs) {
                 toast.error("Failed to get your songs. Please try again.");
                 return;
             }
-            const play = {
-                tracks: {
-                    items: mySongs.items,
-                },
+            const mySongTracks = {
+                items: mySongs.items,
                 total: mySongs.items?.length,
-            } as PlaylistInfo;
+            } as PlaylistInfo['tracks'];
 
-            await handleAddTracksAndSkip(queueState, play);
+            await handleAddTracksAndSkip(queueState, mySongTracks);
             return;
         }
 
-        // Fetch playlist info on-demand if not already loaded
+        // Fetch playlist info on-demand if not already loaded (also handles post-login state timing)
         let currentPlaylistInfo = playlistInfo;
-        if (!currentPlaylistInfo && playlistUrl) {
-            const playlistId = GetPlaylistIdFromUrl(playlistUrl);
+        let currentPlaylistUrl = playlistUrl;
+        if (!currentPlaylistInfo) {
+            const saved = getPlaylistInfo();
+            if (saved) {
+                currentPlaylistInfo = saved.info;
+                currentPlaylistUrl = saved.url;
+                setPlaylistInfo(saved.info);
+                setPlaylistUrl(saved.url);
+            }
+        }
+        if (!currentPlaylistInfo && currentPlaylistUrl) {
+            const playlistId = GetPlaylistIdFromUrl(currentPlaylistUrl);
             currentPlaylistInfo = await GetPlaylistInfo(playlistId);
             if (currentPlaylistInfo) {
                 setPlaylistInfo(currentPlaylistInfo);
@@ -129,10 +180,12 @@ export function MainColumn() {
             return;
         }
 
-        await handleAddTracksAndSkip(queueState, currentPlaylistInfo);
+        // Use pre-shuffled tracks if available, otherwise use freshly loaded playlist tracks
+        const tracksToQueue = shuffledTracks ?? currentPlaylistInfo.tracks;
+        await handleAddTracksAndSkip(queueState, tracksToQueue);
     };
 
-    const handleAddTracksAndSkip = async (queueState: QueueState, playlistInfo: PlaylistInfo) => {
+    const handleAddTracksAndSkip = async (queueState: QueueState, tracks: PlaylistInfo['tracks']) => {
         if (requestOnGoing.current || isQueuingTunes) {
             console.log("Request is ongoing. Please wait.");
             return;
@@ -140,7 +193,7 @@ export function MainColumn() {
 
         requestOnGoing.current = true;
         setIsQueuingTunes(true);
-        const idsToAdd = MergeQueueAndPlaylist(queueState, playlistInfo, amountOfEpisodes, songToPodcastRatio, randomizedChecked);
+        const idsToAdd = MergeQueueAndPlaylist(queueState, tracks, amountOfEpisodes, songToPodcastRatio);
         if (!idsToAdd || idsToAdd.length === 0) {
             toast.error("No songs to add.");
             setIsQueuingTunes(false);
@@ -188,13 +241,15 @@ export function MainColumn() {
                 handleRetry={() => fetchPlaylistInfo(playlistUrl, setPlaylistInfo, setLoadingFailed, setIsLoading)}
                 useMySongs={useMySongs}
                 setUseMySongs={setUseMySongs}
+                reshuffle={reshuffle}
             />
             {!useMySongs && (
                 <QueuePreview
-                    playlistInfo={playlistInfo}
+                    tracks={shuffledTracks}
                     amountOfEpisodes={amountOfEpisodes}
                     songToPodcastRatio={songToPodcastRatio}
-                    randomizedChecked={randomizedChecked}
+                    isOpen={previewOpen}
+                    setIsOpen={handleSetPreviewOpen}
                 />
             )}
             <Divider />
