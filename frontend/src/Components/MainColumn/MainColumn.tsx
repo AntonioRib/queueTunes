@@ -23,6 +23,7 @@ import { QueueState } from "../../Models/QueueState";
 import { GetMySongs } from "../../Services/GetMySongs";
 import { savePlaylistInfo } from "../../Hooks/savePlaylistInfo";
 import { QueuePreview } from "../QueuePreview/QueuePreview";
+import { PausePlayback } from "../../Services/PausePlayback";
 
 export function MainColumn() {
     const location = useLocation()
@@ -123,8 +124,8 @@ export function MainColumn() {
         }
 
         const playbackState = await GetPlaybackState();
-        if (!playbackState || !playbackState.is_playing) {
-            toast.error("Please start playing a podcast.");
+        if (!playbackState) {
+            toast.error("No active Spotify device found. Please open Spotify and play something first.");
             return;
         }
 
@@ -136,7 +137,7 @@ export function MainColumn() {
 
         const detectedEpisodes = countEpisodesInQueue(queueState);
         if (detectedEpisodes === 0) {
-            toast.error("No podcast episodes found in your queue. Please start playing a podcast.");
+            toast.error("No podcast episodes found in your queue. Please queue up some podcast episodes first.");
             return;
         }
 
@@ -151,7 +152,7 @@ export function MainColumn() {
                 total: mySongs.items?.length,
             } as PlaylistInfo['tracks'];
 
-            await handleAddTracksAndSkip(queueState, mySongTracks);
+            await handleAddTracksAndSkip(queueState, mySongTracks, playbackState.is_playing);
             return;
         }
 
@@ -182,10 +183,10 @@ export function MainColumn() {
 
         // Use pre-shuffled tracks if available, otherwise use freshly loaded playlist tracks
         const tracksToQueue = shuffledTracks ?? currentPlaylistInfo.tracks;
-        await handleAddTracksAndSkip(queueState, tracksToQueue);
+        await handleAddTracksAndSkip(queueState, tracksToQueue, playbackState.is_playing);
     };
 
-    const handleAddTracksAndSkip = async (queueState: QueueState, tracks: PlaylistInfo['tracks']) => {
+    const handleAddTracksAndSkip = async (queueState: QueueState, tracks: PlaylistInfo['tracks'], wasPlaying: boolean) => {
         if (requestOnGoing.current || isQueuingTunes) {
             console.log("Request is ongoing. Please wait.");
             return;
@@ -215,6 +216,11 @@ export function MainColumn() {
             error: "Failed to skip to next episode.",
         });
         await skipPromises;
+
+        if (!wasPlaying) {
+            await PausePlayback();
+        }
+
         setIsQueuingTunes(false);
         requestOnGoing.current = false;
     };
