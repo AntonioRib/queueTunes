@@ -11,24 +11,19 @@ interface SourceChoiceProps {
     loadingFailed: boolean;
     isLoading: boolean;
     handleRetry: () => void;
-    useMySongs: string;
-    setUseMySongs: React.Dispatch<SetStateAction<string>>;
+    useMySongs: boolean;
+    setUseMySongs: React.Dispatch<SetStateAction<boolean>>;
 }
 
 export const SourceChoice = ({ playlistUrl, setPlaylistUrl, playlistName, playlistNumberOfSongs, playlistSongsApproximate, playlistFollowers, loadingFailed, isLoading, handleRetry, useMySongs, setUseMySongs }: SourceChoiceProps) => {
-    const handleRadioChange = (event: { target: { value: SetStateAction<string>; }; }) => {
-        setUseMySongs(event.target.value);
-    };
-
     const radioButtons = (
         <div className="flex items-center">
             <label className="flex items-center mr-3">
                 <input
                     type="radio"
                     name="useMySongs"
-                    value="false"
-                    checked={useMySongs === "false"}
-                    onChange={handleRadioChange}
+                    checked={!useMySongs}
+                    onChange={() => setUseMySongs(false)}
                     className="mr-2 accent-emerald-500"
                 />
                 <span className="text-sm font-medium">Use Playlist</span>
@@ -37,9 +32,8 @@ export const SourceChoice = ({ playlistUrl, setPlaylistUrl, playlistName, playli
                 <input
                     type="radio"
                     name="useMySongs"
-                    value="true"
-                    checked={useMySongs === "true"}
-                    onChange={handleRadioChange}
+                    checked={useMySongs}
+                    onChange={() => setUseMySongs(true)}
                     className="mr-2 accent-emerald-500"
                 />
                 <span className="text-sm font-medium">Use My Songs</span>
@@ -47,7 +41,7 @@ export const SourceChoice = ({ playlistUrl, setPlaylistUrl, playlistName, playli
         </div>
     );
 
-    if (useMySongs === "true") {
+    if (useMySongs) {
         return (
             <>
                 {radioButtons}

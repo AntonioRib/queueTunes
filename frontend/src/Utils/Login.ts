@@ -43,6 +43,13 @@ export const getToken = async () => {
     const token = getFromLocalStorageWithExpiry('access_token');
     if (token) return [token, true];
 
+    // Try refreshing with stored refresh_token before falling back
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (refreshToken) {
+        const refreshed = await refreshAccessToken(refreshToken);
+        if (refreshed) return [refreshed, true];
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
 
     let code = urlParams.get('code') as string;
@@ -84,12 +91,46 @@ const requestToken = async (code: string) => {
     });
 
     if (response.access_token) {
-        setLocalStorageWithExpiry('access_token', response.access_token, response.expires_in * 60 * 60);
+        setLocalStorageWithExpiry('access_token', response.access_token, response.expires_in * 1000);
         axios.defaults.headers.common['Authorization'] = 'Bearer ' + response.access_token;
         localStorage.setItem('refresh_token', response.refresh_token);
     }
 
     return response.access_token;
+};
+
+const refreshAccessToken = async (refreshToken: string): Promise<string | null> => {
+    try {
+        const body = {
+            client_id,
+            grant_type: 'refresh_token',
+            refresh_token: refreshToken,
+        };
+
+        const { data: response } = await Axios.post<{
+            access_token: string;
+            token_type: string;
+            expires_in: number;
+            refresh_token?: string;
+        }>('https://accounts.spotify.com/api/token', body, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+        });
+
+        if (response.access_token) {
+            setLocalStorageWithExpiry('access_token', response.access_token, response.expires_in * 1000);
+            axios.defaults.headers.common['Authorization'] = 'Bearer ' + response.access_token;
+            if (response.refresh_token) {
+                localStorage.setItem('refresh_token', response.refresh_token);
+            }
+            return response.access_token;
+        }
+        return null;
+    } catch {
+        localStorage.removeItem('refresh_token');
+        return null;
+    }
 };
 
 export const cleanTokens = () => {

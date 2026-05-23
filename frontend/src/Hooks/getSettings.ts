@@ -2,7 +2,7 @@ export const getSettings = (currentUrl: string): {
     number_episodes: number,
     podcast_ratio: number,
     randomize_tracks: boolean,
-    useMySongs: string
+    useMySongs: boolean
 } | null => {
     if (!localStorage.getItem("settings")) {
         return null;
@@ -13,6 +13,6 @@ export const getSettings = (currentUrl: string): {
         number_episodes: number,
         podcast_ratio: number
         randomize_tracks: boolean
-        useMySongs: string
+        useMySongs: boolean
     };
 };

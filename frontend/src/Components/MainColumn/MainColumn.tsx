@@ -21,6 +21,7 @@ import { getSettings } from "../../Hooks/getSettings";
 import { QueueState } from "../../Models/QueueState";
 import { GetMySongs } from "../../Services/GetMySongs";
 import { savePlaylistInfo } from "../../Hooks/savePlaylistInfo";
+import { QueuePreview } from "../QueuePreview/QueuePreview";
 
 export function MainColumn() {
     const location = useLocation()
@@ -31,7 +32,7 @@ export function MainColumn() {
 
 
     const savedSettings = getSettings(location.pathname);
-    const [useMySongs, setUseMySongs] = useState(savedSettings?.useMySongs || "false");
+    const [useMySongs, setUseMySongs] = useState(savedSettings?.useMySongs ?? false);
     const [songToPodcastRatio, setSongToPodcastRatio] = useState(savedSettings?.podcast_ratio || 2);
     const [amountOfEpisodes, setAmountOfEpisodes] = useState(savedSettings?.number_episodes || 4);
 
@@ -96,7 +97,7 @@ export function MainColumn() {
             return;
         }
 
-        if (useMySongs === "true") {
+        if (useMySongs) {
             const mySongs = await GetMySongs();
             if (!mySongs) {
                 toast.error("Failed to get your songs. Please try again.");
@@ -188,10 +189,18 @@ export function MainColumn() {
                 useMySongs={useMySongs}
                 setUseMySongs={setUseMySongs}
             />
+            {!useMySongs && (
+                <QueuePreview
+                    playlistInfo={playlistInfo}
+                    amountOfEpisodes={amountOfEpisodes}
+                    songToPodcastRatio={songToPodcastRatio}
+                    randomizedChecked={randomizedChecked}
+                />
+            )}
             <Divider />
             <Step3
                 onClick={onClick}
-                disabled={((playlistInfo === undefined && useMySongs === "false") || isQueuingTunes)}
+                disabled={((playlistInfo === undefined && !useMySongs) || isQueuingTunes)}
                 isQueuingTunes={isQueuingTunes}
             />
         </div>

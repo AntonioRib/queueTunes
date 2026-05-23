@@ -20,8 +20,8 @@ interface Step2Props {
     randomizedChecked: boolean;
     setRandomizedChecked: (checked: boolean) => void;
     handleRetry: () => void;
-    useMySongs: string;
-    setUseMySongs: React.Dispatch<SetStateAction<string>>;
+    useMySongs: boolean;
+    setUseMySongs: React.Dispatch<SetStateAction<boolean>>;
 }
 
 export function Step2({ playlistUrl, setPlaylistUrl, songToPodcastRatio, setSongToPodcastRatio, playlistName, playlistNumberOfSongs, playlistSongsApproximate, playlistFollowers, loadingFailed, isLoading, amountOfEpisodes, setAmountOfEpisodes, randomizedChecked, setRandomizedChecked, handleRetry, useMySongs, setUseMySongs }: Step2Props) {
