@@ -238,7 +238,7 @@ export function MainColumn() {
     };
 
     return (
-        <div id="column" className="max-w-md min-w-60 text-start bg-emerald-950 border border-green-900 rounded-lg px-10 py-5 shadow-lg">
+        <div id="column" className="w-full max-w-md min-w-60 text-start bg-emerald-950 border border-green-900 rounded-lg px-10 py-5 shadow-lg">
             <Step1 />
             <Divider />
             <Step2
