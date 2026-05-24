@@ -8,7 +8,7 @@ export const GetPlaylistInfo = async (playlistId: string): Promise<PlaylistInfo 
 
     // Try backend proxy first (works without user login for user-created playlists)
     try {
-        const backendUrl = env.REACT_APP_BACKEND_TOKEN_URL.replace('/api/token', '');
+        const backendUrl = env.REACT_APP_BACKEND_URL;
         const response = await instance.get(`${backendUrl}/api/playlist/${playlistId}`);
         return response.data;
     } catch (backendError: any) {

@@ -10,7 +10,7 @@ export const GetSpotifyToken = async (): Promise<SpotifyTokenResponse> => {
         return savedToken;
     }
 
-    const url = env.REACT_APP_BACKEND_TOKEN_URL
+    const url = `${env.REACT_APP_BACKEND_URL}/api/token`
     return await axios.get(url, { timeout: 10000 })
         .then((response: { data: any; }) => {
             secureLocalStorage.setItem("SPOTIFY_TOKEN", response.data);

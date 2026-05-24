@@ -46,9 +46,7 @@ export function Step2({ playlistUrl, setPlaylistUrl, songToPodcastRatio, setSong
                     setUseMySongs={setUseMySongs}
                 />
             </div>
-            {!useMySongs && (
-                <RandomizeCheckbox randomizedChecked={randomizedChecked} setRandomizedChecked={setRandomizedChecked} reshuffle={reshuffle} />
-            )}
+            <RandomizeCheckbox randomizedChecked={randomizedChecked} setRandomizedChecked={setRandomizedChecked} reshuffle={useMySongs ? undefined : reshuffle} />
             <EpisodeSlider amountOfEpisodes={amountOfEpisodes} setAmountOfEpisodes={setAmountOfEpisodes} />
             <RatioSlider songToPodcastRatio={songToPodcastRatio} setSongToPodcastRatio={setSongToPodcastRatio} />
         </div>
