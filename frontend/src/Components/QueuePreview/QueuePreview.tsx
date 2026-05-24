@@ -30,7 +30,7 @@ export function QueuePreview({ tracks, amountOfEpisodes, songToPodcastRatio, isO
     }
 
     return (
-        <div className="mb-2">
+        <div className="mb-2 min-w-0 w-full">
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex items-center gap-2 text-sm font-semibold text-emerald-300 hover:text-emerald-200 transition"
@@ -46,9 +46,9 @@ export function QueuePreview({ tracks, amountOfEpisodes, songToPodcastRatio, isO
                 Queue Preview
             </button>
             {isOpen && (
-                <div className="mt-2 max-h-48 overflow-y-auto rounded-lg bg-emerald-900/50 p-2 space-y-0.5">
+                <div className="mt-2 max-h-48 overflow-y-auto overflow-x-hidden rounded-lg bg-emerald-900/50 p-2 space-y-0.5">
                     {preview.map((item, i) => (
-                        <div key={i} className={`flex items-center gap-2 text-xs px-2 py-0.5 rounded ${item.type === 'episode' ? 'bg-emerald-800/60 text-emerald-200 font-medium' : 'text-white/80'
+                        <div key={i} className={`flex items-center gap-2 text-xs px-2 py-0.5 rounded min-w-0 ${item.type === 'episode' ? 'bg-emerald-800/60 text-emerald-200 font-medium' : 'text-white/80'
                             }`}>
                             <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${item.type === 'episode' ? 'bg-emerald-400' : 'bg-white/50'
                                 }`} />

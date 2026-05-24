@@ -65,6 +65,13 @@ export function MainColumn() {
             setShuffledTracks(undefined);
             return;
         }
+        // Restore saved shuffle order after login redirect
+        const savedShuffle = localStorage.getItem("shuffledTracks");
+        if (savedShuffle && randomizedChecked) {
+            localStorage.removeItem("shuffledTracks");
+            setShuffledTracks(JSON.parse(savedShuffle));
+            return;
+        }
         if (randomizedChecked) {
             setShuffledTracks(shuffleTracks(playlistInfo.tracks));
         } else {
@@ -119,6 +126,9 @@ export function MainColumn() {
         if (!token) {
             if (playlistInfo) {
                 savePlaylistInfo(playlistUrl, playlistInfo);
+            }
+            if (shuffledTracks) {
+                localStorage.setItem("shuffledTracks", JSON.stringify(shuffledTracks));
             }
             localStorage.setItem("pendingQueue", "true");
             logInWithSpotify();
