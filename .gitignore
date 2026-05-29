@@ -24,3 +24,4 @@ yarn-error.log*
 env.js
 backend/scratch
 .hintrc
+frontend/build/

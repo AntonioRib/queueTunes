@@ -1,7 +1,7 @@
 import axios from 'axios';
 import env from "react-dotenv";
 import { PlaylistInfo } from '../Models/PlaylistInfo';
-import { getFromLocalStorageWithExpiry } from '../Utils/LocalStorage';
+import { getValidAccessToken } from '../Utils/Login';
 
 export const GetPlaylistInfo = async (playlistId: string): Promise<PlaylistInfo | undefined> => {
     const instance = axios.create();
@@ -16,7 +16,7 @@ export const GetPlaylistInfo = async (playlistId: string): Promise<PlaylistInfo 
     }
 
     // Fall back to user's OAuth token (may work for some playlists the user follows)
-    const userToken = getFromLocalStorageWithExpiry('access_token');
+    const userToken = await getValidAccessToken();
     if (!userToken) {
         return undefined;
     }

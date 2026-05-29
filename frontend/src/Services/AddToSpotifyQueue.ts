@@ -1,9 +1,9 @@
 import axios from 'axios';
-import { getFromLocalStorageWithExpiry } from '../Utils/LocalStorage';
+import { getValidAccessToken } from '../Utils/Login';
 
 export const AddToSpotifyQueue = async (trackUri: string) => {
     const url = 'https://api.spotify.com/v1/me/player/queue';
-    const token = getFromLocalStorageWithExpiry('access_token');
+    const token = await getValidAccessToken();
     const params = {
         uri: trackUri,
     };

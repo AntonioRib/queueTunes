@@ -33,11 +33,13 @@ export function MainColumn() {
     const [isLoading, setIsLoading] = useState(false);
     const [loadingFailed, setLoadingFailed] = useState(false);
 
-
+    const episodesFromUrl = new URLSearchParams(location.search).get('episodes');
     const savedSettings = getSettings(location.pathname);
     const [useMySongs, setUseMySongs] = useState(savedSettings?.useMySongs ?? false);
     const [songToPodcastRatio, setSongToPodcastRatio] = useState(savedSettings?.podcast_ratio || 2);
-    const [amountOfEpisodes, setAmountOfEpisodes] = useState(savedSettings?.number_episodes || 4);
+    const [amountOfEpisodes, setAmountOfEpisodes] = useState(
+        episodesFromUrl ? Math.min(Number(episodesFromUrl), 10) : (savedSettings?.number_episodes || 4)
+    );
 
     const hasFetched = useRef(false);
     const requestOnGoing = useRef(false);
@@ -221,16 +223,18 @@ export function MainColumn() {
             error: "Failed to add songs to queue.",
         });
         await addTracksPromise;
-        const skipPromises = skipTracksOnQueue(amountOfEpisodes);
-        toast.promise(skipPromises, {
-            loading: "Skipping to next episode...",
-            success: "Successfully added songs to queue and skipped to next episode!",
-            error: "Failed to skip to next episode.",
-        });
-        await skipPromises;
 
-        if (!wasPlaying) {
-            await PausePlayback();
+        // Skip past: currently playing (1) + the podcast episodes already in queue
+        // (from Quick Queue) to reach our interleaved tracks.
+        const skipsNeeded = amountOfEpisodes + (wasPlaying ? 1 : 0);
+        if (skipsNeeded > 0) {
+            const skipPromise = skipTracksOnQueue(skipsNeeded);
+            toast.promise(skipPromise, {
+                loading: "Skipping to interleaved queue...",
+                success: "Playing your interleaved queue!",
+                error: "Failed to skip to interleaved queue.",
+            });
+            await skipPromise;
         }
 
         setIsQueuingTunes(false);

@@ -3,6 +3,7 @@ import axios from 'axios';
 import env from "react-dotenv";
 import { getFromLocalStorageWithExpiry, setLocalStorageWithExpiry } from './LocalStorage';
 import { base64encode, generateRandomString, sha256 } from './Crypto';
+import { HIDE_PLAYED_EPISODES } from '../featureFlags';
 
 const client_id = env.REACT_APP_SPOTIFY_CLIENT_ID;
 const redirect_uri = env.REACT_APP_SPOTIFY_REDIRECT_URL;
@@ -13,10 +14,11 @@ const SCOPES = [
     'user-read-currently-playing',
     'user-read-playback-state',
     'user-modify-playback-state',
-    'user-library-read'
-] as const;
+    'user-library-read',
+    ...(HIDE_PLAYED_EPISODES ? ['user-read-playback-position'] : []),
+];
 
-export const logInWithSpotify = async () => {
+export const logInWithSpotify = async (customRedirectUri?: string) => {
     let codeVerifier = localStorage.getItem('code_verifier');
 
     if (!codeVerifier) {
@@ -27,9 +29,14 @@ export const logInWithSpotify = async () => {
     const hashed = await sha256(codeVerifier);
     const codeChallenge = base64encode(hashed);
 
+    const effectiveRedirectUri = customRedirectUri || redirect_uri;
+    if (customRedirectUri) {
+        localStorage.setItem('custom_redirect_uri', customRedirectUri);
+    }
+
     authUrl.search = new URLSearchParams({
         client_id,
-        redirect_uri,
+        redirect_uri: effectiveRedirectUri,
         response_type: 'code',
         scope: SCOPES.join(' '),
         code_challenge_method: 'S256',
@@ -70,11 +77,14 @@ export const getToken = async () => {
 
 const requestToken = async (code: string) => {
     const code_verifier = localStorage.getItem('code_verifier') as string;
+    const customRedirect = localStorage.getItem('custom_redirect_uri');
+    const effectiveRedirectUri = customRedirect || redirect_uri;
+    if (customRedirect) localStorage.removeItem('custom_redirect_uri');
 
     const body = {
         code,
         client_id,
-        redirect_uri,
+        redirect_uri: effectiveRedirectUri,
         code_verifier,
         grant_type: 'authorization_code',
     };
@@ -141,6 +151,21 @@ export const cleanTokens = () => {
     localStorage.removeItem('public_access_token');
     localStorage.removeItem('code_verifier');
     delete axios.defaults.headers.common['Authorization'];
+};
+
+/**
+ * Returns a valid access token, refreshing if expired.
+ * Use this in services instead of reading localStorage directly.
+ */
+export const getValidAccessToken = async (): Promise<string | null> => {
+    const token = getFromLocalStorageWithExpiry('access_token');
+    if (token) return token;
+
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (refreshToken) {
+        return await refreshAccessToken(refreshToken);
+    }
+    return null;
 };
 
 // Axios interceptor: auto-refresh token on 401 and retry the request

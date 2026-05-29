@@ -1,9 +1,9 @@
 import axios from 'axios';
-import { getFromLocalStorageWithExpiry } from '../Utils/LocalStorage';
+import { getValidAccessToken } from '../Utils/Login';
 
 export const SkipToNext = async () => {
     const url = 'https://api.spotify.com/v1/me/player/next';
-    const token = getFromLocalStorageWithExpiry('access_token');
+    const token = await getValidAccessToken();
     return await axios.post(url, null, {
         headers: {
             Authorization: `Bearer ${token}`,

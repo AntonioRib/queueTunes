@@ -1,10 +1,10 @@
 import axios from 'axios';
-import { getFromLocalStorageWithExpiry } from '../Utils/LocalStorage';
+import { getValidAccessToken } from '../Utils/Login';
 import { QueueState } from '../Models/QueueState';
 
 export const GetSpotifyQueueState = async (): Promise<QueueState> => {
     const url = 'https://api.spotify.com/v1/me/player/queue';
-    const token = getFromLocalStorageWithExpiry('access_token');
+    const token = await getValidAccessToken();
 
     return await axios.get(url, {
         headers: {

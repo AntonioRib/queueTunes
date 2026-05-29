@@ -1,9 +1,9 @@
 import axios from 'axios';
-import { getFromLocalStorageWithExpiry } from '../Utils/LocalStorage';
+import { getValidAccessToken } from '../Utils/Login';
 
 export const GetPlaybackState = async (): Promise<any> => {
     const url = 'https://api.spotify.com/v1/me/player';
-    const token = getFromLocalStorageWithExpiry('access_token');
+    const token = await getValidAccessToken();
 
     return await axios.get(url, {
         headers: {

@@ -1,10 +1,10 @@
 import axios from 'axios';
-import { getFromLocalStorageWithExpiry } from '../Utils/LocalStorage';
+import { getValidAccessToken } from '../Utils/Login';
 import { UserSavedTracks } from '../Models/UserSavedTracks';
 
 export const GetMySongs = async (): Promise<UserSavedTracks> => {
     const url = 'https://api.spotify.com/v1/me/tracks';
-    const token = getFromLocalStorageWithExpiry('access_token');
+    const token = await getValidAccessToken();
 
     return await axios.get(url, {
         params: {
