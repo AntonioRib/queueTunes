@@ -23,7 +23,6 @@ import { QueueState } from "../../Models/QueueState";
 import { GetMySongs } from "../../Services/GetMySongs";
 import { savePlaylistInfo } from "../../Hooks/savePlaylistInfo";
 import { QueuePreview } from "../QueuePreview/QueuePreview";
-import { PausePlayback } from "../../Services/PausePlayback";
 import packageJson from '../../../package.json';
 
 export function MainColumn() {
