@@ -10,7 +10,7 @@ export function Step3({ onClick, disabled, isQueuingTunes }: Step3Props) {
     return (
         <div id="step3">
             <div className="my-5 text-base font-semibold">
-                3. Queue Tunes (it will ask you to log in)
+                3. Queue Tunes
             </div>
             <QueueTunesButton onClick={onClick} disabled={disabled} isQueuingTunes={isQueuingTunes} />
         </div>
