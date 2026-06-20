@@ -106,7 +106,7 @@ export function QuickQueue() {
                 return;
             }
 
-            const shows: SpotifyShow[] = await GetMyShows();
+            const shows: SpotifyShow[] = await GetMyShows({ forceRefresh: forceFullRefresh });
             if (shows.length === 0) {
                 setEpisodes([]);
                 return;

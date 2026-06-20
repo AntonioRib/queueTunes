@@ -14,3 +14,8 @@ export const HIDE_PLAYED_EPISODES = false;
  *  (POST /api/shows/episodes) instead of calling Spotify directly per-show.
  *  Turn off to revert to the legacy per-show client-side fan-out. */
 export const USE_BACKEND_EPISODE_CACHE = true;
+
+/** Cache the user's followed shows in localStorage (6h TTL) so QuickQueue
+ *  doesn't re-paginate `/v1/me/shows` on every refresh. Manual full
+ *  refreshes still force a fresh fetch. */
+export const USE_MY_SHOWS_CACHE = true;
