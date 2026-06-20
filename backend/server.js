@@ -30,7 +30,9 @@ app.use(
       // Allow non-browser clients (curl, server-to-server) which send no Origin header
       if (!origin) return callback(null, true);
       if (allowedOrigins.has(origin)) return callback(null, true);
-      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+      // Disallowed: omit CORS headers so the browser blocks it, without
+      // throwing (which would leak a stack trace via the default error handler).
+      return callback(null, false);
     },
   }),
 );
