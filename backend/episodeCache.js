@@ -1,9 +1,9 @@
 // episodeCache.js
-// SQLite-backed stale-while-revalidate cache for Spotify show episodes.
+// JSON-file-backed stale-while-revalidate cache for Spotify show episodes.
+// Avoids native dependencies so it runs on any Node version Azure picks.
 const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
-const Database = require("better-sqlite3");
 
 const FRESH_TTL_MS = 60 * 60 * 1000;
 const HARD_TTL_MS = 24 * 60 * 60 * 1000;
@@ -17,66 +17,64 @@ const MAX_CONCURRENT_FETCHES = 5;
 
 const MAX_RETRIES = 3;
 
-const resolveDbPath = () => {
+// Disk-flush is debounced so a burst of writes only produces one fsync.
+const FLUSH_DEBOUNCE_MS = 500;
+
+const resolveDataDir = () => {
   const primaryDir = "/home/data";
   const fallbackDir = path.resolve(__dirname, "data");
-  let dir = primaryDir;
   try {
     fs.mkdirSync(primaryDir, { recursive: true });
-    // Probe writability — on local dev /home/data may exist but not be writable.
     fs.accessSync(primaryDir, fs.constants.W_OK);
+    return primaryDir;
   } catch (_err) {
-    dir = fallbackDir;
     fs.mkdirSync(fallbackDir, { recursive: true });
+    return fallbackDir;
   }
-  return path.join(dir, "episodes.db");
 };
 
-const dbPath = resolveDbPath();
-const db = new Database(dbPath);
-db.pragma("journal_mode = WAL");
-db.exec(`
-  CREATE TABLE IF NOT EXISTS episodes (
-    show_id TEXT PRIMARY KEY,
-    limit_used INTEGER NOT NULL,
-    episodes_json TEXT NOT NULL,
-    fetched_at INTEGER NOT NULL
-  );
-`);
+const dataDir = resolveDataDir();
+const cachePath = path.join(dataDir, "episodes.json");
+const tmpPath = `${cachePath}.tmp`;
 
-const selectStmt = db.prepare(
-  "SELECT limit_used, episodes_json, fetched_at FROM episodes WHERE show_id = ?",
-);
-const upsertStmt = db.prepare(`
-  INSERT INTO episodes (show_id, limit_used, episodes_json, fetched_at)
-  VALUES (@show_id, @limit_used, @episodes_json, @fetched_at)
-  ON CONFLICT(show_id) DO UPDATE SET
-    limit_used = excluded.limit_used,
-    episodes_json = excluded.episodes_json,
-    fetched_at = excluded.fetched_at;
-`);
+// In-memory store: { [showId]: { limitUsed, episodes, fetchedAt } }
+let store = {};
 
-const readCache = (showId) => {
-  const row = selectStmt.get(showId);
-  if (!row) return null;
+const loadFromDisk = () => {
   try {
-    return {
-      limitUsed: row.limit_used,
-      episodes: JSON.parse(row.episodes_json),
-      fetchedAt: row.fetched_at,
-    };
-  } catch (_err) {
-    return null;
+    if (!fs.existsSync(cachePath)) return;
+    const raw = fs.readFileSync(cachePath, "utf8");
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object") {
+      store = parsed;
+    }
+  } catch (err) {
+    console.warn("Failed to load episode cache, starting empty:", err.message);
+    store = {};
   }
 };
+loadFromDisk();
+
+let flushTimer = null;
+const flushSoon = () => {
+  if (flushTimer) return;
+  flushTimer = setTimeout(() => {
+    flushTimer = null;
+    try {
+      fs.writeFileSync(tmpPath, JSON.stringify(store));
+      fs.renameSync(tmpPath, cachePath);
+    } catch (err) {
+      console.warn("Failed to flush episode cache:", err.message);
+    }
+  }, FLUSH_DEBOUNCE_MS);
+};
+
+const readCache = (showId) => store[showId] || null;
 
 const writeCache = (showId, limitUsed, episodes) => {
-  upsertStmt.run({
-    show_id: showId,
-    limit_used: limitUsed,
-    episodes_json: JSON.stringify(episodes),
-    fetched_at: Date.now(),
-  });
+  store[showId] = { limitUsed, episodes, fetchedAt: Date.now() };
+  flushSoon();
 };
 
 // Tiny semaphore so we never have more than MAX_CONCURRENT_FETCHES outbound
@@ -219,5 +217,5 @@ const getEpisodesForShows = async (showIds, limit, getToken) => {
 
 module.exports = {
   getEpisodesForShows,
-  _dbPath: dbPath,
+  _cachePath: cachePath,
 };
