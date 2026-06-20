@@ -1,5 +1,6 @@
 import Axios from 'axios';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import env from "react-dotenv";
 import { getFromLocalStorageWithExpiry, setLocalStorageWithExpiry } from './LocalStorage';
 import { base64encode, generateRandomString, sha256 } from './Crypto';
@@ -55,6 +56,8 @@ export const getToken = async () => {
     if (refreshToken) {
         const refreshed = await refreshAccessToken(refreshToken);
         if (refreshed) return [refreshed, true];
+        // Refresh failed. If it was invalid_grant, handleInvalidGrant() already started
+        // re-login. For transient failures we fall through to the public-token paths.
     }
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -105,9 +108,28 @@ const requestToken = async (code: string) => {
         setLocalStorageWithExpiry('access_token', response.access_token, (response.expires_in - 300) * 1000);
         axios.defaults.headers.common['Authorization'] = 'Bearer ' + response.access_token;
         localStorage.setItem('refresh_token', response.refresh_token);
+        // PKCE code_verifier is single-use; clear it now that the exchange succeeded
+        localStorage.removeItem('code_verifier');
     }
 
     return response.access_token;
+};
+
+let sessionExpiredHandled = false;
+const handleInvalidGrant = () => {
+    if (sessionExpiredHandled) return;
+    sessionExpiredHandled = true;
+    toast.error('Session expired, please sign in again.');
+    cleanTokens();
+    // Give the toast a moment to render before redirecting away
+    setTimeout(() => { logInWithSpotify(); }, 800);
+};
+
+const isInvalidGrantError = (error: unknown): boolean => {
+    if (!Axios.isAxiosError(error)) return false;
+    const status = error.response?.status;
+    const code = (error.response?.data as { error?: string } | undefined)?.error;
+    return status === 400 && code === 'invalid_grant';
 };
 
 const refreshAccessToken = async (refreshToken: string): Promise<string | null> => {
@@ -139,8 +161,12 @@ const refreshAccessToken = async (refreshToken: string): Promise<string | null> 
             return response.access_token;
         }
         return null;
-    } catch {
-        localStorage.removeItem('refresh_token');
+    } catch (error) {
+        // Only drop the refresh_token + force re-login when Spotify says it's actually invalid.
+        // Network blips and 5xx errors leave the token in place so the next attempt can retry.
+        if (isInvalidGrantError(error)) {
+            handleInvalidGrant();
+        }
         return null;
     }
 };
@@ -196,10 +222,15 @@ axios.interceptors.response.use(
                 return axios(originalRequest);
             }
 
-            // Refresh failed — tokens are invalid, force re-login
-            cleanTokens();
-            logInWithSpotify();
-            return new Promise(() => { }); // halt the chain, page is redirecting
+            // Refresh failed. If it was an invalid_grant, refreshAccessToken has already
+            // triggered the session-expired toast + re-login. Otherwise (network/5xx),
+            // surface the original error so callers can decide what to do.
+            const refreshTokenStillPresent = localStorage.getItem('refresh_token');
+            if (!refreshTokenStillPresent) {
+                handleInvalidGrant();
+                return new Promise(() => { }); // halt the chain, page is redirecting
+            }
+            return Promise.reject(error);
         }
         return Promise.reject(error);
     }

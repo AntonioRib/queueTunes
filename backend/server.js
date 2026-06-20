@@ -3,6 +3,7 @@ const express = require("express");
 const axios = require("axios");
 const qs = require("qs");
 const cors = require("cors");
+const rateLimit = require("express-rate-limit");
 const { LocalStorage } = require("node-localstorage");
 require("dotenv").config();
 
@@ -13,7 +14,43 @@ const port = process.env.PORT || 5333;
 const clientId = process.env.SPOTIFY_CLIENT_ID;
 const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
-app.use(cors());
+const DEV_ORIGINS = ["http://localhost:3000", "http://localhost:5173"];
+const configuredOrigins = (process.env.ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+const allowedOrigins = new Set([
+  ...configuredOrigins,
+  ...(process.env.NODE_ENV === "production" ? [] : DEV_ORIGINS),
+]);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow non-browser clients (curl, server-to-server) which send no Origin header
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.has(origin)) return callback(null, true);
+      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
+  }),
+);
+
+const tokenLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many token requests, please try again later." },
+});
+
+const playlistLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many playlist requests, please try again later." },
+});
+
 const localStorage = new LocalStorage("./scratch");
 
 // Function to get the Spotify Access Token
@@ -44,15 +81,13 @@ const getSpotifyToken = async () => {
 
 const getCachedToken = () => {
   const token = localStorage.getItem("SPOTIFY_TOKEN");
-  console.log("Token:", token);
+  if (!token) return null;
   const savedToken = JSON.parse(token);
-  console.log("Saved Token:", savedToken);
   if (
     savedToken &&
     savedToken.expiration_time > Date.now() &&
     savedToken.access_token
   ) {
-    console.log("Saved Token:", savedToken);
     return savedToken;
   }
 
@@ -60,33 +95,27 @@ const getCachedToken = () => {
 };
 
 // Endpoint to get the access token
-app.get("/api/token", async (req, res) => {
-  console.log("Getting a call to get the token");
+app.get("/api/token", tokenLimiter, async (req, res) => {
   const savedToken = getCachedToken();
   if (savedToken) {
-    console.log("Saved token found");
     return res.json({
       access_token: savedToken.access_token,
       expiration_time: savedToken.expiration_time,
     });
   }
 
-  console.log("No saved token found, getting new token");
   const token = await getSpotifyToken();
   if (token) {
-    console.log("New Token:", token);
     return res.json({
       access_token: token.access_token,
       expiration_time: token.expiration_time,
     });
   } else {
-    console.log("Failed to get token");
     return res.status(500).json({ error: "Failed to get token" });
   }
 });
 
 app.get("/", (req, res) => {
-  console.log("Hello World");
   return res.send("Hello World!");
 });
 
@@ -125,7 +154,7 @@ const getPlaylistFromEmbed = async (playlistId) => {
 };
 
 // Endpoint to get playlist info via backend token
-app.get("/api/playlist/:id", async (req, res) => {
+app.get("/api/playlist/:id", playlistLimiter, async (req, res) => {
   const playlistId = req.params.id;
   if (!playlistId || !/^[a-zA-Z0-9]+$/.test(playlistId)) {
     return res.status(400).json({ error: "Invalid playlist ID" });
