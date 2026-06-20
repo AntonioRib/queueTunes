@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { GetMyShows, SpotifyShow } from '../../Services/GetMyShows';
-import { GetShowEpisodes } from '../../Services/GetShowEpisodes';
+import { GetShowsEpisodesBatch } from '../../Services/GetShowsEpisodesBatch';
 import { AddToSpotifyQueue } from '../../Services/AddToSpotifyQueue';
 import { GetAvailableDevices, SpotifyDevice } from '../../Services/GetAvailableDevices';
 import { TransferPlayback } from '../../Services/TransferPlayback';
@@ -117,23 +117,20 @@ export function QuickQueue() {
             const episodesPerShow = isIncremental ? 2 : 5;
 
             const freshEpisodes: EpisodeWithShow[] = [];
-            const batchSize = 10;
+            const showsById = new Map(shows.map(s => [s.id, s]));
+            const episodesByShow = await GetShowsEpisodesBatch(
+                shows.map(s => s.id),
+                episodesPerShow,
+            );
 
-            for (let i = 0; i < shows.length; i += batchSize) {
-                if (i > 0) await new Promise(r => setTimeout(r, 300));
-                const batch = shows.slice(i, i + batchSize);
-                const results = await Promise.all(
-                    batch.map(show => GetShowEpisodes(show.id, episodesPerShow))
-                );
-
-                results.forEach((showEpisodes, idx) => {
-                    const show = batch[idx];
-                    showEpisodes.forEach(ep => {
-                        freshEpisodes.push({
-                            ...ep,
-                            showName: show.name,
-                            showImages: show.images,
-                        });
+            for (const [showId, showEpisodes] of Object.entries(episodesByShow)) {
+                const show = showsById.get(showId);
+                if (!show) continue;
+                showEpisodes.forEach(ep => {
+                    freshEpisodes.push({
+                        ...ep,
+                        showName: show.name,
+                        showImages: show.images,
                     });
                 });
             }

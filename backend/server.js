@@ -6,9 +6,12 @@ const cors = require("cors");
 const rateLimit = require("express-rate-limit");
 const { LocalStorage } = require("node-localstorage");
 require("dotenv").config();
+const episodeCache = require("./episodeCache");
 
 const app = express();
 const port = process.env.PORT || 5333;
+
+app.use(express.json({ limit: "100kb" }));
 
 // Spotify Client Credentials
 const clientId = process.env.SPOTIFY_CLIENT_ID;
@@ -51,6 +54,16 @@ const playlistLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many playlist requests, please try again later." },
+});
+
+// One frontend QuickQueue refresh maps to a single call on this endpoint
+// regardless of how many shows the user follows, so 60/min/IP is plenty.
+const episodesLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many episode requests, please try again later." },
 });
 
 const localStorage = new LocalStorage("./scratch");
@@ -195,6 +208,50 @@ app.get("/api/playlist/:id", playlistLimiter, async (req, res) => {
     const message =
       error.response?.data?.error?.message || "Failed to fetch playlist";
     return res.status(status).json({ error: message });
+  }
+});
+
+const SHOW_ID_PATTERN = /^[a-zA-Z0-9]+$/;
+const MAX_SHOW_IDS = 100;
+
+const getValidSpotifyToken = async () => {
+  const cached = getCachedToken();
+  if (cached) return cached.access_token;
+  const fresh = await getSpotifyToken();
+  return fresh?.access_token || null;
+};
+
+// Batched episodes endpoint backed by SQLite + SWR cache. Replaces the
+// per-show fan-out that the frontend used to do directly against Spotify.
+app.post("/api/shows/episodes", episodesLimiter, async (req, res) => {
+  const { showIds, limit } = req.body || {};
+
+  if (!Array.isArray(showIds) || showIds.length === 0) {
+    return res.status(400).json({ error: "showIds must be a non-empty array" });
+  }
+  if (showIds.length > MAX_SHOW_IDS) {
+    return res
+      .status(400)
+      .json({ error: `showIds must contain at most ${MAX_SHOW_IDS} entries` });
+  }
+  if (!showIds.every((id) => typeof id === "string" && SHOW_ID_PATTERN.test(id))) {
+    return res.status(400).json({ error: "showIds contains invalid IDs" });
+  }
+
+  let effectiveLimit = Number.isFinite(limit) ? Math.floor(limit) : 5;
+  if (effectiveLimit < 1) effectiveLimit = 1;
+  if (effectiveLimit > 50) effectiveLimit = 50;
+
+  try {
+    const data = await episodeCache.getEpisodesForShows(
+      showIds,
+      effectiveLimit,
+      getValidSpotifyToken,
+    );
+    return res.json(data);
+  } catch (err) {
+    console.error("Error in /api/shows/episodes:", err.message || err);
+    return res.status(500).json({ error: "Failed to fetch show episodes" });
   }
 });
 

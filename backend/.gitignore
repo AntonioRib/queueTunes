@@ -1,0 +1,4 @@
+data/
+scratch/
+node_modules/
+.env
