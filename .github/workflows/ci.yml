@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend (lint + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18.x"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+        env:
+          # Placeholder values so the build's env-var reads don't crash.
+          # No secrets involved — real values come from repo Actions vars
+          # at deploy time (see azure-static-web-apps-*.yml).
+          VITE_SPOTIFY_CLIENT_ID: ci-placeholder
+          VITE_SPOTIFY_REDIRECT_URL: http://127.0.0.1:3000
+          VITE_SPOTIFY_AUTH_URL: https://accounts.spotify.com/authorize
+          VITE_BACKEND_URL: http://localhost:5333
+
+  backend:
+    name: Backend (syntax check)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18.x"
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: node --check server.js
