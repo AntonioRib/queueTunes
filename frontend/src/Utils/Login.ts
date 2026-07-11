@@ -18,7 +18,7 @@ const auth_uri = import.meta.env.VITE_SPOTIFY_AUTH_URL;
 const authUrl = new URL(auth_uri);
 
 /** Resolve the redirect URI to send Spotify. Env value if set, else runtime origin. */
-const resolveRedirectUri = (): string => redirect_uri_env || window.location.origin;
+export const resolveRedirectUri = (): string => redirect_uri_env || window.location.origin;
 
 const SCOPES = [
     'user-read-currently-playing',
@@ -155,7 +155,7 @@ const requestToken = async (code: string): Promise<string | null> => {
 };
 
 /** Strip the `?code=` (and `state`) params from the current URL without a reload. */
-const cleanCodeFromUrl = (): void => {
+export const cleanCodeFromUrl = (): void => {
     try {
         const url = new URL(window.location.href);
         if (!url.searchParams.has('code') && !url.searchParams.has('state')) return;
