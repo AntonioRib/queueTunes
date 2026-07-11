@@ -1,7 +1,7 @@
 export function Title() {
     return (
-        <div className="mb-10 font-light lg:text-8xl text-6xl text-white tracking-wide">
-            <div>QueueTunes</div>
-        </div>
+        <h1 className="mb-6 text-4xl font-light tracking-wide text-white sm:mb-10 sm:text-6xl lg:text-8xl">
+            QueueTunes
+        </h1>
     );
 }

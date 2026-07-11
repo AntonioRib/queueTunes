@@ -14,9 +14,11 @@ function App() {
           },
         }} />
       <Title />
-      <Routes>
-        <Route path="/" element={<Wizard />} />
-      </Routes>
+      <main className="flex w-full flex-col items-center">
+        <Routes>
+          <Route path="/" element={<Wizard />} />
+        </Routes>
+      </main>
     </div>
   );
 }

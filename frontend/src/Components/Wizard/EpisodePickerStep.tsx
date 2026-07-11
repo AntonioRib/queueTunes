@@ -214,13 +214,17 @@ export function EpisodePickerStep({
     const canProceed = selectedIds.size > 0;
 
     return (
-        <div className="flex w-full max-w-md flex-col gap-4 pb-24">
+        <div className="flex w-full max-w-md flex-col gap-4 pb-32">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
+                    <label htmlFor="lookback-days" className="sr-only">
+                        {strings.episodePicker.prompt}
+                    </label>
                     <select
+                        id="lookback-days"
                         value={lookbackDays}
                         onChange={e => onLookbackChange(Number(e.target.value) as LookbackDays)}
-                        className="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white focus:border-green-500 focus:outline-none"
+                        className="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-base text-white focus:border-green-500 focus:outline-none sm:text-sm"
                     >
                         <option value={1}>{strings.episodePicker.lookbackToday}</option>
                         <option value={3}>{strings.episodePicker.lookbackLast3}</option>
@@ -228,13 +232,15 @@ export function EpisodePickerStep({
                     </select>
                     <button
                         onClick={forceRefresh}
+                        aria-label={strings.episodePicker.refreshTitle}
                         title={strings.episodePicker.refreshTitle}
-                        className="p-1 text-zinc-400 transition-colors hover:text-white"
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-full text-zinc-400 transition-colors hover:text-white"
                     >
                         <svg
+                            aria-hidden="true"
                             xmlns="http://www.w3.org/2000/svg"
-                            width="18"
-                            height="18"
+                            width="20"
+                            height="20"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
@@ -252,7 +258,7 @@ export function EpisodePickerStep({
                 {episodes.length > 0 && (
                     <button
                         onClick={toggleAll}
-                        className="text-sm text-zinc-400 transition-colors hover:text-white"
+                        className="min-h-[44px] rounded-md px-3 py-2 text-sm text-zinc-400 transition-colors hover:text-white"
                     >
                         {allSelected ? strings.episodePicker.deselectAll : strings.episodePicker.selectAll}
                     </button>
@@ -262,9 +268,15 @@ export function EpisodePickerStep({
             <p className="text-sm text-zinc-400">{strings.episodePicker.prompt}</p>
 
             {isLoading ? (
-                <div className="flex flex-col gap-3">
+                <div
+                    role="status"
+                    aria-live="polite"
+                    aria-busy="true"
+                    className="flex flex-col gap-3"
+                >
+                    <span className="sr-only">{strings.episodePicker.prompt}</span>
                     {[1, 2, 3, 4].map(i => (
-                        <div key={i} className="h-20 w-full animate-pulse rounded-lg bg-zinc-800" />
+                        <div key={i} className="h-20 w-full animate-pulse rounded-lg bg-zinc-800 motion-reduce:animate-none" aria-hidden="true" />
                     ))}
                 </div>
             ) : (
@@ -279,11 +291,14 @@ export function EpisodePickerStep({
                 />
             )}
 
-            <div className="fixed inset-x-0 bottom-0 bg-gradient-to-t from-black via-black to-transparent p-4">
+            <div
+                className="fixed inset-x-0 bottom-0 bg-gradient-to-t from-black via-black to-transparent px-4 pt-4"
+                style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+            >
                 <button
                     onClick={onNext}
                     disabled={!canProceed}
-                    className="mx-auto block w-full max-w-md rounded-full bg-green-500 py-3 font-semibold text-black transition-colors hover:bg-green-400 disabled:bg-zinc-700 disabled:text-zinc-400"
+                    className="mx-auto block w-full max-w-md min-h-[44px] rounded-full bg-green-500 py-3 font-semibold text-black transition-colors hover:bg-green-400 disabled:bg-zinc-700 disabled:text-zinc-400"
                 >
                     {canProceed
                         ? strings.episodePicker.nextWithCount(selectedIds.size)

@@ -39,7 +39,7 @@ export function EpisodeList({
                 {onWidenLookback && lookbackDays < 7 && (
                     <button
                         onClick={onWidenLookback}
-                        className="mt-4 rounded-full border border-zinc-700 px-4 py-1.5 text-xs text-zinc-300 hover:border-green-500 hover:text-white"
+                        className="mt-4 min-h-[44px] rounded-full border border-zinc-700 px-4 py-2 text-sm text-zinc-300 hover:border-green-500 hover:text-white"
                     >
                         {strings.episodeList.widenTo7}
                     </button>
@@ -50,23 +50,29 @@ export function EpisodeList({
 
     return (
         <div className="flex flex-col gap-4">
-            {groupedEpisodes.map(group => (
-                <div key={group.day}>
-                    <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                        {group.day}
-                    </h3>
-                    <div className="flex flex-col gap-2">
-                        {group.episodes.map(ep => (
-                            <EpisodeCard
-                                key={ep.id}
-                                episode={ep}
-                                isChecked={checkedIds.has(ep.id)}
-                                onToggle={onToggleEpisode}
-                            />
-                        ))}
-                    </div>
-                </div>
-            ))}
+            {groupedEpisodes.map(group => {
+                const headingId = `episode-group-${group.day.replace(/\s+/g, '-').toLowerCase()}`;
+                return (
+                    <section key={group.day} aria-labelledby={headingId}>
+                        <h2
+                            id={headingId}
+                            className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-400"
+                        >
+                            {group.day}
+                        </h2>
+                        <ul className="flex flex-col gap-2">
+                            {group.episodes.map(ep => (
+                                <EpisodeCard
+                                    key={ep.id}
+                                    episode={ep}
+                                    isChecked={checkedIds.has(ep.id)}
+                                    onToggle={onToggleEpisode}
+                                />
+                            ))}
+                        </ul>
+                    </section>
+                );
+            })}
         </div>
     );
 }

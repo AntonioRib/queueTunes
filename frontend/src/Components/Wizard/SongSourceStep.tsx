@@ -100,43 +100,63 @@ export function SongSourceStep({
         (source.kind === 'playlist' && (isLoading || !source.info || !source.url));
 
     return (
-        <div className="flex w-full max-w-md flex-col gap-4 pb-24">
+        <div className="flex w-full max-w-md flex-col gap-4 pb-32">
             <p className="text-sm text-zinc-400">{strings.songSource.prompt}</p>
 
-            <div className="flex flex-col gap-2 rounded-lg bg-zinc-900 p-3">
-                <label className="flex items-center gap-3">
+            <fieldset className="flex flex-col gap-2 rounded-lg bg-zinc-900 p-3">
+                <legend className="sr-only">{strings.songSource.sourceLegend}</legend>
+                <label className="flex min-h-[44px] items-center gap-3">
                     <input
                         type="radio"
                         name="song-source"
                         checked={source.kind === 'my-songs'}
                         onChange={() => onSourceChange({ kind: 'my-songs' })}
-                        className="h-4 w-4 accent-green-500"
+                        className="h-5 w-5 accent-green-500"
                     />
-                    <span className="text-sm text-white">{strings.songSource.mySongsLabel}</span>
-                    <span className="text-xs text-zinc-500">{strings.songSource.mySongsHint}</span>
+                    <span className="text-base text-white sm:text-sm">{strings.songSource.mySongsLabel}</span>
+                    <span className="text-xs text-zinc-400">{strings.songSource.mySongsHint}</span>
                 </label>
-                <label className="flex items-center gap-3">
+                <label className="flex min-h-[44px] items-center gap-3">
                     <input
                         type="radio"
                         name="song-source"
                         checked={source.kind === 'playlist'}
                         onChange={() => onSourceChange({ kind: 'playlist', url: urlInput })}
-                        className="h-4 w-4 accent-green-500"
+                        className="h-5 w-5 accent-green-500"
                     />
-                    <span className="text-sm text-white">{strings.songSource.playlistLabel}</span>
+                    <span className="text-base text-white sm:text-sm">{strings.songSource.playlistLabel}</span>
                 </label>
 
                 {source.kind === 'playlist' && (
                     <div className="mt-2 flex flex-col gap-2">
+                        <label htmlFor="playlist-url" className="sr-only">
+                            {strings.songSource.playlistLabel}
+                        </label>
                         <input
-                            type="text"
+                            id="playlist-url"
+                            type="url"
+                            inputMode="url"
+                            autoComplete="off"
+                            autoCorrect="off"
+                            autoCapitalize="off"
+                            spellCheck={false}
                             value={urlInput}
                             onChange={e => setUrlInput(e.target.value)}
                             placeholder={strings.songSource.playlistPlaceholder}
-                            className="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:border-green-500 focus:outline-none"
+                            aria-invalid={!!loadError}
+                            aria-describedby={loadError ? 'playlist-url-error' : undefined}
+                            className="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-base text-white placeholder-zinc-500 focus:border-green-500 focus:outline-none"
                         />
-                        {isLoading && <p className="text-xs text-zinc-400">{strings.songSource.loadingPlaylist}</p>}
-                        {loadError && <p className="text-xs text-red-400">{loadError}</p>}
+                        {isLoading && (
+                            <p role="status" aria-live="polite" className="text-xs text-zinc-400">
+                                {strings.songSource.loadingPlaylist}
+                            </p>
+                        )}
+                        {loadError && (
+                            <p id="playlist-url-error" role="alert" className="text-xs text-red-400">
+                                {loadError}
+                            </p>
+                        )}
                         {source.info && !isLoading && !loadError && (
                             <div className="rounded-lg bg-zinc-800 p-3">
                                 <p className="text-sm font-medium text-white">{source.info.name}</p>
@@ -147,21 +167,22 @@ export function SongSourceStep({
                         )}
                     </div>
                 )}
-            </div>
+            </fieldset>
 
             <div className="rounded-lg bg-zinc-900">
                 <button
                     onClick={() => setFineTuneOpen(v => !v)}
-                    className="flex w-full items-center justify-between p-3 text-sm text-zinc-300 hover:text-white"
+                    className="flex min-h-[44px] w-full items-center justify-between p-3 text-sm text-zinc-300 hover:text-white"
                     aria-expanded={fineTuneOpen}
+                    aria-controls="fine-tune-panel"
                 >
                     <span>{strings.songSource.fineTune}</span>
-                    <span aria-hidden className={`transition-transform ${fineTuneOpen ? 'rotate-90' : ''}`}>
+                    <span aria-hidden className={`transition-transform motion-reduce:transition-none ${fineTuneOpen ? 'rotate-90' : ''}`}>
                         ›
                     </span>
                 </button>
                 {fineTuneOpen && (
-                    <div className="flex flex-col gap-4 p-3 pt-0">
+                    <div id="fine-tune-panel" className="flex flex-col gap-4 p-3 pt-0">
                         <div>
                             <label htmlFor="songs-per-ep" className="text-sm text-white">
                                 {strings.songSource.songsPerEpisodeLabel(songsPerEpisode)}
@@ -174,15 +195,16 @@ export function SongSourceStep({
                                 step={1}
                                 value={songsPerEpisode}
                                 onChange={e => onSongsPerEpisodeChange(Number(e.target.value))}
+                                aria-valuetext={`${songsPerEpisode} song${songsPerEpisode === 1 ? '' : 's'} per episode`}
                                 className="mt-2 h-2 w-full cursor-pointer appearance-none rounded-lg bg-zinc-700 accent-green-500"
                             />
                         </div>
-                        <label className="flex items-center gap-2 text-sm text-white">
+                        <label className="flex min-h-[44px] items-center gap-2 text-sm text-white">
                             <input
                                 type="checkbox"
                                 checked={randomize}
                                 onChange={e => onRandomizeChange(e.target.checked)}
-                                className="h-4 w-4 accent-green-500"
+                                className="h-5 w-5 accent-green-500"
                             />
                             {strings.songSource.randomizeLabel}
                         </label>
@@ -196,17 +218,20 @@ export function SongSourceStep({
                 </p>
             )}
 
-            <div className="fixed inset-x-0 bottom-0 flex flex-col gap-2 bg-gradient-to-t from-black via-black to-transparent p-4">
+            <div
+                className="fixed inset-x-0 bottom-0 flex flex-col gap-2 bg-gradient-to-t from-black via-black to-transparent px-4 pt-4"
+                style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+            >
                 <button
                     onClick={onPlayNow}
                     disabled={playDisabled}
-                    className="mx-auto block w-full max-w-md rounded-full bg-green-500 py-3 font-semibold text-black transition-colors hover:bg-green-400 disabled:bg-zinc-700 disabled:text-zinc-400"
+                    className="mx-auto block w-full max-w-md min-h-[44px] rounded-full bg-green-500 py-3 font-semibold text-black transition-colors hover:bg-green-400 disabled:bg-zinc-700 disabled:text-zinc-400"
                 >
                     {strings.songSource.playNow}
                 </button>
                 <button
                     onClick={onBack}
-                    className="mx-auto block w-full max-w-md text-sm text-zinc-400 hover:text-white"
+                    className="mx-auto block w-full max-w-md min-h-[44px] py-2 text-sm text-zinc-400 hover:text-white"
                 >
                     {strings.songSource.backToEpisodes}
                 </button>

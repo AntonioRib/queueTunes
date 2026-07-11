@@ -1,5 +1,7 @@
+import { useRef } from 'react';
 import { SpotifyDevice } from '../../Services/GetAvailableDevices';
 import { strings } from '../../strings';
+import { useDialogA11y } from './useDialogA11y';
 
 /** Props for {@link DevicePickerModal}. */
 export interface DevicePickerModalProps {
@@ -21,20 +23,39 @@ const iconFor = (type: string): string => {
  * continues the flow automatically.
  */
 export function DevicePickerModal({ devices, onSelect, onCancel, onRefresh }: DevicePickerModalProps) {
+    const dialogRef = useRef<HTMLDivElement>(null);
+    useDialogA11y(dialogRef, onCancel);
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-            <div className="w-full max-w-sm rounded-xl bg-zinc-900 p-6">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+            onClick={onCancel}
+        >
+            <div
+                ref={dialogRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="device-picker-title"
+                aria-describedby="device-picker-prompt"
+                tabIndex={-1}
+                onClick={e => e.stopPropagation()}
+                className="w-full max-w-sm rounded-xl bg-zinc-900 p-6"
+            >
                 <div className="mb-2 flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-white">{strings.devicePicker.title}</h3>
+                    <h2 id="device-picker-title" className="text-lg font-semibold text-white">
+                        {strings.devicePicker.title}
+                    </h2>
                     <button
                         onClick={onRefresh}
+                        aria-label={strings.devicePicker.refreshTitle}
                         title={strings.devicePicker.refreshTitle}
-                        className="p-1 text-zinc-400 transition-colors hover:text-white"
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-full text-zinc-400 transition-colors hover:text-white"
                     >
                         <svg
+                            aria-hidden="true"
                             xmlns="http://www.w3.org/2000/svg"
-                            width="18"
-                            height="18"
+                            width="20"
+                            height="20"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
@@ -49,33 +70,36 @@ export function DevicePickerModal({ devices, onSelect, onCancel, onRefresh }: De
                         </svg>
                     </button>
                 </div>
-                <p className="mb-4 text-sm text-zinc-400">{strings.devicePicker.prompt}</p>
-                <p className="mb-4 text-xs text-zinc-500">
+                <p id="device-picker-prompt" className="mb-4 text-sm text-zinc-400">
+                    {strings.devicePicker.prompt}
+                </p>
+                <p className="mb-4 text-xs text-zinc-400">
                     {strings.devicePicker.troubleshoot}
                 </p>
-                <div className="flex flex-col gap-2">
+                <ul className="flex flex-col gap-2">
                     {devices.map(device => (
-                        <button
-                            key={device.id}
-                            onClick={() => onSelect(device.id)}
-                            className="flex items-center gap-3 rounded-lg bg-zinc-800 p-3 text-left transition-colors hover:bg-zinc-700"
-                        >
-                            <span className="text-lg">{iconFor(device.type)}</span>
-                            <div>
-                                <div className="text-sm font-medium text-white">{device.name}</div>
-                                <div className="text-xs text-zinc-400">{device.type}</div>
-                            </div>
-                        </button>
+                        <li key={device.id}>
+                            <button
+                                onClick={() => onSelect(device.id)}
+                                className="flex w-full min-h-[44px] items-center gap-3 rounded-lg bg-zinc-800 p-3 text-left transition-colors hover:bg-zinc-700"
+                            >
+                                <span aria-hidden="true" className="text-lg">{iconFor(device.type)}</span>
+                                <span className="flex flex-col">
+                                    <span className="text-sm font-medium text-white">{device.name}</span>
+                                    <span className="text-xs text-zinc-400">{device.type}</span>
+                                </span>
+                            </button>
+                        </li>
                     ))}
                     {devices.length === 0 && (
-                        <p className="rounded-lg bg-zinc-800 p-3 text-center text-sm text-zinc-400">
+                        <li className="rounded-lg bg-zinc-800 p-3 text-center text-sm text-zinc-400">
                             {strings.devicePicker.emptyList}
-                        </p>
+                        </li>
                     )}
-                </div>
+                </ul>
                 <button
                     onClick={onCancel}
-                    className="mt-4 w-full py-2 text-sm text-zinc-400 transition-colors hover:text-white"
+                    className="mt-4 min-h-[44px] w-full py-3 text-sm text-zinc-400 transition-colors hover:text-white"
                 >
                     {strings.devicePicker.cancel}
                 </button>

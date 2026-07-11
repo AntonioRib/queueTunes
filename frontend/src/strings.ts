@@ -62,6 +62,7 @@ export const strings = {
     },
     songSource: {
         prompt: 'Which songs should play between episodes?',
+        sourceLegend: 'Song source',
         mySongsLabel: 'My songs',
         mySongsHint: 'A random slice of your Saved Tracks',
         playlistLabel: 'Playlist URL',

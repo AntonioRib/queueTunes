@@ -273,7 +273,7 @@ export function Wizard() {
                 </p>
                 <button
                     onClick={() => logInWithSpotify()}
-                    className="rounded-full bg-green-500 px-6 py-3 font-semibold text-black transition-colors hover:bg-green-400"
+                    className="min-h-[44px] rounded-full bg-green-500 px-6 py-3 font-semibold text-black transition-colors hover:bg-green-400"
                 >
                     {strings.wizard.loginButton}
                 </button>
@@ -344,7 +344,7 @@ export function Wizard() {
                 />
             )}
 
-            <p className="mt-6 text-center text-xs text-zinc-600">{strings.wizard.version(packageJson.version)}</p>
+            <p className="mt-6 text-center text-xs text-zinc-500">{strings.wizard.version(packageJson.version)}</p>
         </>
     );
 }
