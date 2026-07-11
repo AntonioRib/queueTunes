@@ -1,10 +1,17 @@
+# Deploys the backend Express server to Azure App Service.
+# Gated on the "CI - Lint, test, build" workflow succeeding.
+#
+# The build (npm install + zip) runs here rather than reusing a CI
+# artifact so this workflow stays self-contained; the tradeoff is
+# duplicate work with CI's install step (small and cache-hit).
+#
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: QueueTunes - Backend - Azure Web App
+name: Deploy backend
 on:
   workflow_run:
-    workflows: ["CI"]
+    workflows: ["CI - Lint, test, build"]
     types: [completed]
     branches: [main]
   workflow_dispatch:

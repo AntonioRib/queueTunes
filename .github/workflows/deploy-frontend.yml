@@ -1,8 +1,16 @@
-name: Azure Static Web Apps CI/CD
+# Deploys the frontend to Azure Static Web Apps.
+# Gated on the "CI - Lint, test, build" workflow succeeding.
+#
+# The build runs here (not in CI) because Vite bakes VITE_* env vars
+# into the bundle at build time — CI uses placeholders so it doesn't
+# need the real deploy variables. Rebuild is <1s so the duplication is
+# effectively free.
+
+name: Deploy frontend
 
 on:
   workflow_run:
-    workflows: ["CI"]
+    workflows: ["CI - Lint, test, build"]
     types: [completed]
     branches: [main]
   pull_request:

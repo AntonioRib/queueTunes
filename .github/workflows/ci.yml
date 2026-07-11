@@ -1,4 +1,13 @@
-name: CI
+# Pre-deploy verification for both frontend and backend.
+# Runs on every push to main and every PR.
+# Deploy workflows are gated on this workflow succeeding (see workflow_run
+# triggers in deploy-frontend.yml and deploy-backend.yml).
+#
+# Uses placeholder VITE_* env vars so the build passes without needing
+# access to the production deploy variables — those live only in the
+# deploy workflows.
+
+name: CI - Lint, test, build
 
 on:
   push:
