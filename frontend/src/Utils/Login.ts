@@ -71,7 +71,7 @@ export const getToken = async () => {
 
     const urlParams = new URLSearchParams(window.location.search);
 
-    let code = urlParams.get('code') as string;
+    const code = urlParams.get('code') as string;
     if (code) {
         const exchanged = await requestToken(code);
         if (exchanged) return [exchanged, true];

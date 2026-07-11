@@ -1,6 +1,6 @@
 export const setLocalStorageWithExpiry = (
     key: string,
-    value: any,
+    value: unknown,
     ttl: number = 1000 * 60 * 60
 ) => {
     const now = new Date();
