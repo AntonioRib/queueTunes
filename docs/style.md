@@ -61,6 +61,61 @@ export async function playUris(uris: string[], deviceId?: string): Promise<void>
 - **Tailwind class order:** layout → spacing → typography → color → state. Let `prettier-plugin-tailwindcss` (already installed) do this automatically.
 - One default export per file when it makes sense, otherwise named exports. Reason: named exports make IDE rename + auto-import unambiguous.
 
+## User-facing strings
+
+- **All user-facing strings live in one place, not inline in components.** Reason: reviewing copy, changing tone, and (later) localizing is a nightmare when strings are scattered.
+- Location: `frontend/src/strings.ts` — a flat object grouped by feature area. Import the key, not the literal.
+- Applies to: button labels, headings, empty-state copy, toast messages, error messages, modal bodies, aria-labels. Anything the user reads.
+- Does **not** apply to: log messages, error codes, developer-only text, test fixtures, single-word CSS-adjacent labels (`"px"`, `"ms"`).
+- Interpolation: use template functions, not string concatenation at the call site.
+
+Bad:
+```tsx
+<button>Play now</button>
+toast.error(`Couldn't reach Spotify. Try again in a second.`);
+```
+
+Good:
+```ts
+// frontend/src/strings.ts
+export const strings = {
+  wizard: {
+    playNow: 'Play now',
+    errorSpotifyUnreachable: "Couldn't reach Spotify. Try again in a second.",
+    queuedAgoWarning: (seconds: number) => `You queued this ${seconds}s ago. Play again?`,
+  },
+} as const;
+```
+```tsx
+<button>{strings.wizard.playNow}</button>
+toast.error(strings.wizard.errorSpotifyUnreachable);
+```
+
+## URLs and API bases
+
+- **No hardcoded base URLs anywhere in the codebase.** Every base URL is a named constant in one place.
+- Location: `frontend/src/config/endpoints.ts` (frontend) and `backend/config/endpoints.js` (backend).
+- Callers use path builders or join helpers, never raw string concatenation of the base.
+
+Bad:
+```ts
+const res = await axios.get('https://api.spotify.com/v1/me/player/devices', { headers });
+```
+
+Good:
+```ts
+// frontend/src/config/endpoints.ts
+export const SPOTIFY_API_BASE = 'https://api.spotify.com/v1';
+export const spotifyUrl = (path: string) => `${SPOTIFY_API_BASE}${path}`;
+
+// caller
+import { spotifyUrl } from '../config/endpoints';
+const res = await axios.get(spotifyUrl('/me/player/devices'), { headers });
+```
+
+- Same rule for the app's own backend (`BACKEND_API_BASE`), the Spotify accounts host (`SPOTIFY_ACCOUNTS_BASE = 'https://accounts.spotify.com'`), and any third-party host we call.
+- When there's a shared axios client (see `spotifyClient.ts` if it exists), configure `baseURL` there and callers pass only the path.
+
 ## Git
 
 - **No commits or pushes without explicit user approval.**

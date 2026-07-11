@@ -5,11 +5,21 @@ import env from "react-dotenv";
 import { getFromLocalStorageWithExpiry, setLocalStorageWithExpiry } from './LocalStorage';
 import { base64encode, generateRandomString, sha256 } from './Crypto';
 import { HIDE_PLAYED_EPISODES } from '../featureFlags';
+import { accountsUrl } from '../config/endpoints';
+import { strings } from '../strings';
 
 const client_id = env.REACT_APP_SPOTIFY_CLIENT_ID;
-const redirect_uri = env.REACT_APP_SPOTIFY_REDIRECT_URL;
+/**
+ * Redirect URI configured for the Spotify app. Must match one of the
+ * Redirect URIs registered on the Spotify Developer Dashboard. Falls
+ * back to `window.location.origin` at runtime if unset.
+ */
+const redirect_uri_env = env.REACT_APP_SPOTIFY_REDIRECT_URL;
 const auth_uri = env.REACT_APP_SPOTIFY_AUTH_URL;
 const authUrl = new URL(auth_uri);
+
+/** Resolve the redirect URI to send Spotify. Env value if set, else runtime origin. */
+const resolveRedirectUri = (): string => redirect_uri_env || window.location.origin;
 
 const SCOPES = [
     'user-read-currently-playing',
@@ -30,10 +40,10 @@ export const logInWithSpotify = async (customRedirectUri?: string) => {
     const hashed = await sha256(codeVerifier);
     const codeChallenge = base64encode(hashed);
 
-    const effectiveRedirectUri = customRedirectUri || redirect_uri;
-    if (customRedirectUri) {
-        localStorage.setItem('custom_redirect_uri', customRedirectUri);
-    }
+    const effectiveRedirectUri = customRedirectUri || resolveRedirectUri();
+    // Persist the exact redirect used so `requestToken` sends the same
+    // value back to Spotify (mismatch → invalid_grant).
+    localStorage.setItem('oauth_redirect_uri', effectiveRedirectUri);
 
     authUrl.search = new URLSearchParams({
         client_id,
@@ -63,7 +73,11 @@ export const getToken = async () => {
     const urlParams = new URLSearchParams(window.location.search);
 
     let code = urlParams.get('code') as string;
-    if (code) return [await requestToken(code), true];
+    if (code) {
+        const exchanged = await requestToken(code);
+        if (exchanged) return [exchanged, true];
+        // Fall through if the exchange failed (stale code, mismatched verifier, …).
+    }
 
     const publicToken = getFromLocalStorageWithExpiry('public_access_token');
     if (publicToken) return [publicToken, false];
@@ -78,11 +92,18 @@ export const getToken = async () => {
     return [null, false];
 };
 
-const requestToken = async (code: string) => {
-    const code_verifier = localStorage.getItem('code_verifier') as string;
-    const customRedirect = localStorage.getItem('custom_redirect_uri');
-    const effectiveRedirectUri = customRedirect || redirect_uri;
-    if (customRedirect) localStorage.removeItem('custom_redirect_uri');
+const requestToken = async (code: string): Promise<string | null> => {
+    const code_verifier = localStorage.getItem('code_verifier');
+    const effectiveRedirectUri =
+        localStorage.getItem('oauth_redirect_uri') || resolveRedirectUri();
+
+    // A missing code_verifier means the code has already been consumed
+    // (or the localStorage was wiped). Don't attempt the exchange —
+    // Spotify would return `invalid_grant` and surface as a runtime error.
+    if (!code_verifier) {
+        cleanCodeFromUrl();
+        return null;
+    }
 
     const body = {
         code,
@@ -92,34 +113,66 @@ const requestToken = async (code: string) => {
         grant_type: 'authorization_code',
     };
 
-    const { data: response } = await Axios.post<{
-        access_token: string;
-        token_type: string;
-        expires_in: number;
-        refresh_token: string;
-    }>('https://accounts.spotify.com/api/token', body, {
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-    });
+    try {
+        const { data: response } = await Axios.post<{
+            access_token: string;
+            token_type: string;
+            expires_in: number;
+            refresh_token: string;
+        }>(accountsUrl('/api/token'), body, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+        });
 
-    if (response.access_token) {
-        // Store with 5min buffer so we refresh before Spotify actually expires it
-        setLocalStorageWithExpiry('access_token', response.access_token, (response.expires_in - 300) * 1000);
-        axios.defaults.headers.common['Authorization'] = 'Bearer ' + response.access_token;
-        localStorage.setItem('refresh_token', response.refresh_token);
-        // PKCE code_verifier is single-use; clear it now that the exchange succeeded
-        localStorage.removeItem('code_verifier');
+        if (response.access_token) {
+            // Store with 5min buffer so we refresh before Spotify actually expires it
+            setLocalStorageWithExpiry('access_token', response.access_token, (response.expires_in - 300) * 1000);
+            axios.defaults.headers.common['Authorization'] = 'Bearer ' + response.access_token;
+            localStorage.setItem('refresh_token', response.refresh_token);
+            // PKCE code_verifier is single-use; clear it now that the exchange succeeded
+            localStorage.removeItem('code_verifier');
+            localStorage.removeItem('oauth_redirect_uri');
+            cleanCodeFromUrl();
+            return response.access_token;
+        }
+        cleanCodeFromUrl();
+        return null;
+    } catch (error) {
+        // Stale code / verifier mismatch / redirect mismatch surface as
+        // `invalid_grant` — expected on a reload after login succeeded and
+        // safe to swallow. Anything else is a real config/network problem
+        // and deserves both a console.error and a toast.
+        cleanCodeFromUrl();
+        if (isInvalidGrantError(error)) {
+            localStorage.removeItem('code_verifier');
+            localStorage.removeItem('oauth_redirect_uri');
+            return null;
+        }
+        console.error('OAuth code exchange failed:', error);
+        toast.error(strings.auth.signInFailed);
+        return null;
     }
+};
 
-    return response.access_token;
+/** Strip the `?code=` (and `state`) params from the current URL without a reload. */
+const cleanCodeFromUrl = (): void => {
+    try {
+        const url = new URL(window.location.href);
+        if (!url.searchParams.has('code') && !url.searchParams.has('state')) return;
+        url.searchParams.delete('code');
+        url.searchParams.delete('state');
+        window.history.replaceState({}, document.title, url.pathname + (url.search || '') + url.hash);
+    } catch {
+        // window / URL unavailable in some test harnesses; non-fatal.
+    }
 };
 
 let sessionExpiredHandled = false;
 const handleInvalidGrant = () => {
     if (sessionExpiredHandled) return;
     sessionExpiredHandled = true;
-    toast.error('Session expired, please sign in again.');
+    toast.error(strings.auth.sessionExpired);
     cleanTokens();
     // Give the toast a moment to render before redirecting away
     setTimeout(() => { logInWithSpotify(); }, 800);
@@ -145,7 +198,7 @@ const refreshAccessToken = async (refreshToken: string): Promise<string | null> 
             token_type: string;
             expires_in: number;
             refresh_token?: string;
-        }>('https://accounts.spotify.com/api/token', body, {
+        }>(accountsUrl('/api/token'), body, {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },

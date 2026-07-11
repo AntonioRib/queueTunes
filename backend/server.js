@@ -17,7 +17,12 @@ app.use(express.json({ limit: "100kb" }));
 const clientId = process.env.SPOTIFY_CLIENT_ID;
 const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
-const DEV_ORIGINS = ["http://localhost:3000", "http://localhost:5173"];
+const DEV_ORIGINS = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+];
 const configuredOrigins = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
   .map((o) => o.trim())

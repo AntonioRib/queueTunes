@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getValidAccessToken } from '../Utils/Login';
+import { spotifyUrl } from '../config/endpoints';
 import { USE_MY_SHOWS_CACHE } from '../featureFlags';
 
 export interface SpotifyShow {
@@ -50,7 +51,7 @@ const writeCache = (shows: SpotifyShow[]): void => {
 };
 
 const fetchAllShows = async (): Promise<SpotifyShow[]> => {
-    const url = 'https://api.spotify.com/v1/me/shows';
+    const url = spotifyUrl('/me/shows');
     const token = await getValidAccessToken();
     const allShows: SpotifyShow[] = [];
     let offset = 0;
@@ -84,8 +85,12 @@ export const GetMyShows = async (
         const shows = await fetchAllShows();
         if (USE_MY_SHOWS_CACHE) writeCache(shows);
         return shows;
-    } catch (error: any) {
-        console.error('Error fetching shows:', error.response?.data || error.message);
+    } catch (error: unknown) {
+        if (axios.isAxiosError(error)) {
+            console.error('Error fetching shows:', error.response?.data ?? error.message);
+        } else {
+            console.error('Error fetching shows:', error);
+        }
         if (USE_MY_SHOWS_CACHE) {
             // On failure, fall back to any cached value (even if expired) rather
             // than returning an empty list.
