@@ -1,21 +1,20 @@
 import Axios from 'axios';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import env from "react-dotenv";
 import { getFromLocalStorageWithExpiry, setLocalStorageWithExpiry } from './LocalStorage';
 import { base64encode, generateRandomString, sha256 } from './Crypto';
 import { HIDE_PLAYED_EPISODES } from '../featureFlags';
 import { accountsUrl } from '../config/endpoints';
 import { strings } from '../strings';
 
-const client_id = env.REACT_APP_SPOTIFY_CLIENT_ID;
+const client_id = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 /**
  * Redirect URI configured for the Spotify app. Must match one of the
  * Redirect URIs registered on the Spotify Developer Dashboard. Falls
  * back to `window.location.origin` at runtime if unset.
  */
-const redirect_uri_env = env.REACT_APP_SPOTIFY_REDIRECT_URL;
-const auth_uri = env.REACT_APP_SPOTIFY_AUTH_URL;
+const redirect_uri_env = import.meta.env.VITE_SPOTIFY_REDIRECT_URL;
+const auth_uri = import.meta.env.VITE_SPOTIFY_AUTH_URL;
 const authUrl = new URL(auth_uri);
 
 /** Resolve the redirect URI to send Spotify. Env value if set, else runtime origin. */

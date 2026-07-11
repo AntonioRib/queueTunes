@@ -47,10 +47,10 @@ jobs:
           github_id_token: ${{ steps.idtoken.outputs.result }}
           ###### End of Repository/Build Configurations ######
         env:
-          REACT_APP_BACKEND_URL: ${{ vars.REACT_APP_BACKEND_URL }}
-          REACT_APP_SPOTIFY_AUTH_URL: ${{ vars.REACT_APP_SPOTIFY_AUTH_URL }}
-          REACT_APP_SPOTIFY_CLIENT_ID: ${{ vars.REACT_APP_SPOTIFY_CLIENT_ID }}
-          REACT_APP_SPOTIFY_REDIRECT_URL: ${{ vars.REACT_APP_SPOTIFY_REDIRECT_URL }}
+          VITE_BACKEND_URL: ${{ vars.VITE_BACKEND_URL }}
+          VITE_SPOTIFY_AUTH_URL: ${{ vars.VITE_SPOTIFY_AUTH_URL }}
+          VITE_SPOTIFY_CLIENT_ID: ${{ vars.VITE_SPOTIFY_CLIENT_ID }}
+          VITE_SPOTIFY_REDIRECT_URL: ${{ vars.VITE_SPOTIFY_REDIRECT_URL }}
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'

@@ -1,5 +1,3 @@
-import env from 'react-dotenv';
-
 /**
  * Base URL for the Spotify Web API (all `/v1/*` endpoints).
  * Change here if Spotify ever ships v2 or a regional host.
@@ -12,10 +10,10 @@ export const SPOTIFY_API_BASE = 'https://api.spotify.com/v1';
 export const SPOTIFY_ACCOUNTS_BASE = 'https://accounts.spotify.com';
 
 /**
- * Base URL for our own Express backend. Sourced from `REACT_APP_BACKEND_URL`
+ * Base URL for our own Express backend. Sourced from `VITE_BACKEND_URL`
  * so the same build points at localhost in dev and Azure App Service in prod.
  */
-export const BACKEND_API_BASE: string = env.REACT_APP_BACKEND_URL;
+export const BACKEND_API_BASE: string = import.meta.env.VITE_BACKEND_URL;
 
 /**
  * Join a Spotify Web API path (must start with `/`) to the API base.
