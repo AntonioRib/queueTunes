@@ -3,15 +3,16 @@
 
 name: QueueTunes - Backend - Azure Web App
 on:
-  push:
-    paths:
-      - backend/**
-    branches:
-      - main
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   build:
+    # Manual re-runs always proceed; CI-triggered runs only when CI succeeded.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     defaults:
       run:
