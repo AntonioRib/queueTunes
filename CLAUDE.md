@@ -56,15 +56,13 @@ Full version + examples: `docs/style.md`.
 
 ## Repo conventions
 
-This is a **personal, single-owner project**. Favor speed and iteration over ceremony:
-
-- **Work directly on `main` in the main checkout.** Do not create worktrees, branches, or PRs for routine changes. Small, focused commits straight to `main` are the norm.
-- Only branch when the change is genuinely risky, long-running, or needs to be stashed for later — and even then, the default is "make it a commit on `main`, revert if wrong".
-- **Show the diff before committing** for anything non-trivial, but the owner is fine with agents committing routine changes directly (docs, small refactors, obvious fixes). If in doubt, ask once.
+- **Work on `main` in the main checkout by default.** Do not create worktrees, branches, or PRs unless the user explicitly asks.
+- **No commits or pushes without explicit user approval.** Even on a solo repo. Report a diff summary and wait.
 - Every agent-assisted commit includes the trailer:
   ```
   Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
   ```
+- Small, focused commits > big-bang commits.
 - `localhost` and `127.0.0.1` are different origins (different localStorage). The Spotify redirect URL must match the Spotify Developer Dashboard exactly.
 
 ## Where to look next
