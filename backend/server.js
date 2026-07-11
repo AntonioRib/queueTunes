@@ -4,7 +4,6 @@ const axios = require("axios");
 const qs = require("qs");
 const cors = require("cors");
 const rateLimit = require("express-rate-limit");
-const { LocalStorage } = require("node-localstorage");
 require("dotenv").config();
 const episodeCache = require("./episodeCache");
 
@@ -71,9 +70,11 @@ const episodesLimiter = rateLimit({
   message: { error: "Too many episode requests, please try again later." },
 });
 
-const localStorage = new LocalStorage("./scratch");
+// In-memory cache for the Spotify client-credentials app token. It expires in
+// ~1h and the refetch is cheap, so surviving process restarts isn't worth a
+// disk dependency.
+let cachedToken = null;
 
-// Function to get the Spotify Access Token
 const getSpotifyToken = async () => {
   const tokenUrl = "https://accounts.spotify.com/api/token";
 
@@ -91,7 +92,7 @@ const getSpotifyToken = async () => {
     const response = await axios.post(tokenUrl, data, { headers });
     const expirationTime = Date.now() + response.data.expires_in * 1000;
     response.data.expiration_time = expirationTime;
-    localStorage.setItem("SPOTIFY_TOKEN", JSON.stringify(response.data));
+    cachedToken = response.data;
     return response.data;
   } catch (error) {
     console.error("Error getting access token", error);
@@ -100,15 +101,12 @@ const getSpotifyToken = async () => {
 };
 
 const getCachedToken = () => {
-  const token = localStorage.getItem("SPOTIFY_TOKEN");
-  if (!token) return null;
-  const savedToken = JSON.parse(token);
   if (
-    savedToken &&
-    savedToken.expiration_time > Date.now() &&
-    savedToken.access_token
+    cachedToken &&
+    cachedToken.expiration_time > Date.now() &&
+    cachedToken.access_token
   ) {
-    return savedToken;
+    return cachedToken;
   }
 
   return null;
