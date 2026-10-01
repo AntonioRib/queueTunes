@@ -33,9 +33,9 @@ After dependency changes, install both lockfiles and run `node scripts/generate-
 
 ## Spotify limitations
 
-Login uses PKCE and browser token storage. Playback requires Premium and an available Spotify Connect device. Public source does not grant access to the hosted app.
+Login uses PKCE and browser token storage. The hosted app is approved for public use; no separate access approval is needed. Playback requires Spotify Premium and an available Spotify Connect device.
 
-[Development Mode](https://developer.spotify.com/blog/2026-02-06-update-on-developer-access-and-platform-security) limits users and API access. [Newer playlist rules](https://developer.spotify.com/documentation/web-api/references/changes/february-2026) may prevent the current app-token playlist proxy from working with new Spotify apps. Authenticated hosted playback and new-app compatibility have not been verified.
+If you run your own instance, your Spotify app may have [Development Mode](https://developer.spotify.com/blog/2026-02-06-update-on-developer-access-and-platform-security) restrictions. [Newer playlist rules](https://developer.spotify.com/documentation/web-api/references/changes/february-2026) may affect the current app-token playlist proxy with new apps; fresh-app compatibility is unverified.
 
 For 403 errors, check app access and Premium; for 429, respect `Retry-After`; for CORS errors, check `ALLOWED_ORIGINS`. Sign in again after scope changes.
 
