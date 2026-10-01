@@ -6,7 +6,7 @@
  *   - Log/dev-only strings, error codes, and test fixtures stay inline.
  *   - Dynamic copy is a function (never string concatenation at the call site).
  *
- * See `docs/style.md` → "User-facing strings".
+ * See `AGENTS.md` for coding conventions.
  */
 export const strings = {
     auth: {
