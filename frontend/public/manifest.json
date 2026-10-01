@@ -1,7 +1,13 @@
 {
   "short_name": "QueueTunes",
   "name": "Add Playlists to your Spotify Queue with Podcasts",
-  "icons": [],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#000000",

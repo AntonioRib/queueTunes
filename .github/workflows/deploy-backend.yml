@@ -16,10 +16,22 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-backend-production
+  cancel-in-progress: false
+
 jobs:
   build:
-    # Manual re-runs always proceed; CI-triggered runs only when CI succeeded.
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    # Manual deploys are main-only; automatic deploys require a trusted push.
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -27,20 +39,24 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
 
       - name: Set up Node.js version
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "18.x"
+          node-version: "22.x"
 
-      - name: npm install, build, and test
+      - name: Install production dependencies and check syntax
         run: |
-          npm install
-          npm run build --if-present
-          npm run test --if-present
+          npm ci --omit=dev
+          node --check server.js
+          node --check episodeCache.js
+          cp ../LICENSE LICENSE
 
       - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
+        run: zip -qr release.zip server.js episodeCache.js package.json package-lock.json node_modules LICENSE THIRD_PARTY_NOTICES.txt
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4

@@ -9,7 +9,7 @@ QueueTunes is a solo-owner web app that interleaves the user's Spotify podcast e
 
 ## Current mental model — read this first
 
-The app is being rewritten around a **single wizard** flow:
+The app uses a **single wizard** flow:
 
 1. **Step 1 — pick episodes** (checkable list of recent episodes from followed shows).
 2. **Step 2 — pick songs** (source: My songs / Playlist URL; fine-tune: songs-per-episode, randomize).
@@ -19,11 +19,11 @@ The **retired** model (do not build against it) had two separate tabs — "Quick
 
 ## Tech stack
 
-- **Frontend:** React 18 + TypeScript + Tailwind CSS, built with `react-scripts` today. A migration to Vite is planned but not yet started — do not preemptively refactor for it.
+- **Frontend:** React 18 + TypeScript + Tailwind CSS, built with Vite; tests use Vitest. Use Node.js 22 LTS for local development and CI.
 - **Routing:** `react-router-dom` v7 (BrowserRouter). The v2 wizard collapses routing to a single `/` plus the OAuth callback.
 - **Auth:** Spotify OAuth PKCE. `Utils/Login.ts::getValidAccessToken()` auto-refreshes tokens; every service goes through it.
-- **Backend:** Express (Node 18). Two responsibilities: a `POST /api/shows/episodes` batch endpoint with a JSON-file-backed SWR cache, and a `GET /api/playlist/:id` proxy that uses a client-credentials app token.
-- **Environment:** `react-dotenv` — the four whitelisted keys are exposed via `frontend/public/env.js`. Backend uses a plain `.env`.
+- **Backend:** Express. A `POST /api/shows/episodes` batch endpoint uses a JSON-file-backed SWR cache; `GET /api/playlist/:id` uses a client-credentials app token. The legacy `/api/token` endpoint also remains.
+- **Environment:** Vite embeds `VITE_*` variables at build time. Copy `frontend/.env.example` to `.env.local`; keep secrets out of browser configuration. Backend uses a plain `.env` with a tracked `.env.example`.
 
 ## Running locally
 
@@ -39,7 +39,7 @@ cd backend && npm start
 
 Required env vars:
 
-- `frontend/public/env.js`: `REACT_APP_SPOTIFY_CLIENT_ID`, `REACT_APP_SPOTIFY_REDIRECT_URI`, `REACT_APP_BACKEND_URL`, and any feature flags (see `src/featureFlags.ts`).
+- `frontend/.env.local`: `VITE_SPOTIFY_CLIENT_ID`, `VITE_SPOTIFY_REDIRECT_URL`, `VITE_SPOTIFY_AUTH_URL`, `VITE_BACKEND_URL`. Feature flags live in `src/featureFlags.ts`.
 - `backend/.env`: `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `ALLOWED_ORIGINS` (CSV), `PORT` (default `5333`).
 
 Full setup, deploy notes, and common gotchas: `docs/runbook.md`.
@@ -62,7 +62,7 @@ Full version + examples: `docs/style.md`.
   Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
   ```
 - Small, focused commits > big-bang commits.
-- `localhost` and `127.0.0.1` are different origins (different localStorage). The Spotify redirect URL must match the Spotify Developer Dashboard exactly.
+- `localhost` and `127.0.0.1` are different origins (different localStorage). Use `http://127.0.0.1:3000` locally; Spotify does not accept `localhost` redirect URIs. The redirect URL must match the Spotify Developer Dashboard exactly.
 
 ## Where to look next
 
